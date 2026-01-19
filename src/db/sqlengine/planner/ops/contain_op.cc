@@ -15,8 +15,8 @@
 #include "db/sqlengine/planner/ops/contain_op.h"
 #include <memory>
 #include <arrow/api.h>
-#include "db/index/common/type.h"
 #include "db/sqlengine/common/util.h"
+#include "zvec/db/type.h"
 
 namespace zvec::sqlengine {
 

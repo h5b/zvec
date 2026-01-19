@@ -14,8 +14,8 @@
 #pragma once
 
 #include <core/framework/index_meta.h>
-#include "db/index/common/type.h"
 #include "proto/zvec.pb.h"
+#include "zvec/db//type.h"
 
 namespace zvec {
 

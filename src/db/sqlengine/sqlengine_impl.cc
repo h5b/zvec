@@ -16,13 +16,13 @@
 #include <unordered_map>
 #include <ailego/logger/logger.h>
 #include "db/common/constants.h"
-#include "db/index/common/doc.h"
-#include "db/index/common/type.h"
 #include "db/sqlengine/analyzer/query_analyzer.h"
 #include "db/sqlengine/parser/sql_info_helper.h"
 #include "db/sqlengine/parser/zvec_parser.h"
 #include "db/sqlengine/planner/op_register.h"
 #include "db/sqlengine/planner/query_planner.h"
+#include "zvec/db/doc.h"
+#include "zvec/db/type.h"
 
 namespace zvec::sqlengine {
 

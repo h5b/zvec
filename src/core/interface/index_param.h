@@ -32,7 +32,7 @@
 #include "core/framework/index_filter.h"
 #include "core/framework/index_meta.h"
 #include "utils/utils.h"
-#include "constants.h"
+#include "zvec/core/interface/constants.h"
 
 namespace zvec::core_interface {
 #define MAX_DIMENSION 65536

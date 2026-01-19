@@ -487,7 +487,7 @@ int IndexMapping::init_index_mapping(size_t len) {
   return 0;
 }
 
-bool IndexMapping::Ishugetlbfs(const std::string &path) const {
+bool IndexMapping::Ishugetlbfs(const std::string & /*path*/) const {
 #ifdef __linux__
   struct statfs buf;
   if (statfs(path.c_str(), &buf) != 0) {

@@ -17,8 +17,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "db/common/status.h"
 #include "db/sqlengine/parser/sql_info.h"
+#include "zvec/db/status.h"
 #include "query_info.h"
 #include "query_node_walker.h"
 

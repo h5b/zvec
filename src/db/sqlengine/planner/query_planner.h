@@ -16,12 +16,12 @@
 
 #include <memory>
 #include <string>
-#include <ailego/pattern/expected.hpp>
 #include <arrow/acero/exec_plan.h>
 #include <arrow/compute/expression.h>
-#include "db/common/status.h"
+#include <zvec/ailego/pattern/expected.hpp>
 #include "db/index/segment/segment.h"
 #include "db/sqlengine/analyzer/query_info.h"
+#include "zvec/db/status.h"
 #include "plan_info.h"
 
 namespace zvec::sqlengine {

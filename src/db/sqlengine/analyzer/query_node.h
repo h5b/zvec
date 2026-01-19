@@ -17,9 +17,9 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include "db/index/common/query_params.h"
 #include "db/sqlengine/common/generic_node.h"
 #include "db/sqlengine/parser/node.h"
+#include "zvec/db/query_params.h"
 
 namespace zvec::sqlengine {
 

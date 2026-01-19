@@ -11,15 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "schema.h"
+
+#include "zvec/db/schema.h"
 #include <regex>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include "common/index_params.h"
-#include "common/type.h"
-#include "common/type_helper.h"
-#include "db/common/status.h"
+#include "db/common/constants.h"
 #include "db/common/typedef.h"
+#include "db/common/utils.h"
+#include "db/index/common/type_helper.h"
+#include "zvec/db/index_params.h"
+#include "zvec/db/status.h"
+#include "zvec/db/type.h"
 
 namespace zvec {
 
@@ -175,6 +179,45 @@ Status FieldSchema::validate() const {
   return Status::OK();
 }
 
+std::string FieldSchema::to_string() const {
+  std::ostringstream oss;
+  oss << "FieldSchema{"
+      << "name:'" << name_ << "'"
+      << ",data_type:" << DataTypeCodeBook::AsString(data_type_)
+      << ",nullable:" << (nullable_ ? "true" : "false")
+      << ",dimension:" << dimension_;
+
+  if (index_params_) {
+    oss << ",index_params:" << index_params_->to_string();
+  } else {
+    oss << ",index_params:null";
+  }
+
+  oss << "}";
+  return oss.str();
+}
+
+std::string FieldSchema::to_string_formatted(int indent_level) const {
+  std::ostringstream oss;
+  oss << indent(indent_level) << "FieldSchema{\n"
+      << indent(indent_level + 1) << "name: '" << name_ << "',\n"
+      << indent(indent_level + 1)
+      << "data_type: " << DataTypeCodeBook::AsString(data_type_) << ",\n"
+      << indent(indent_level + 1)
+      << "nullable: " << (nullable_ ? "true" : "false") << ",\n"
+      << indent(indent_level + 1) << "dimension: " << dimension_ << ",\n";
+
+  if (index_params_) {
+    oss << indent(indent_level + 1)
+        << "index_params: " << index_params_->to_string() << "\n";
+  } else {
+    oss << indent(indent_level + 1) << "index_params: null\n";
+  }
+
+  oss << indent(indent_level) << "}";
+  return oss.str();
+}
+
 Status CollectionSchema::validate() const {
   if (name_.empty()) {
     return Status::InvalidArgument("schema validate failed: name is empty");
@@ -209,6 +252,43 @@ Status CollectionSchema::validate() const {
     CHECK_RETURN_STATUS(s);
   }
   return Status::OK();
+}
+
+std::string CollectionSchema::to_string() const {
+  std::ostringstream oss;
+  oss << "CollectionSchema{"
+      << "name:'" << name_ << "'"
+      << ",max_doc_count_per_segment:" << max_doc_count_per_segment_
+      << ",fields:[";
+
+  for (size_t i = 0; i < fields_.size(); ++i) {
+    if (i > 0) oss << ",";
+    oss << fields_[i]->to_string();
+  }
+
+  oss << "]}";
+  return oss.str();
+}
+
+
+std::string CollectionSchema::to_string_formatted(int indent_level) const {
+  std::ostringstream oss;
+  oss << indent(indent_level) << "CollectionSchema{\n"
+      << indent(indent_level + 1) << "name: '" << name_ << "',\n"
+      << indent(indent_level + 1)
+      << "max_doc_count_per_segment: " << max_doc_count_per_segment_ << ",\n"
+      << indent(indent_level + 1) << "fields: [\n";
+
+  for (size_t i = 0; i < fields_.size(); ++i) {
+    oss << fields_[i]->to_string_formatted(indent_level + 2);
+    if (i < fields_.size() - 1) {
+      oss << ",";
+    }
+    oss << "\n";
+  }
+
+  oss << indent(indent_level + 1) << "]\n" << indent(indent_level) << "}";
+  return oss.str();
 }
 
 Status CollectionSchema::add_field(FieldSchema::Ptr column_schema) {

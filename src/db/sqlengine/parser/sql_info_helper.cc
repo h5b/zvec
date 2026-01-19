@@ -15,11 +15,11 @@
 #include "sql_info_helper.h"
 #include <stdint.h>
 #include <memory>
-#include <ailego/utility/string_helper.h>
-#include "db/index/common/doc.h"
+#include <zvec/ailego/utility/string_helper.h>
 #include "db/sqlengine/common/group_by.h"
 #include "db/sqlengine/common/util.h"
 #include "db/sqlengine/parser/node.h"
+#include "zvec/db/doc.h"
 #include "select_info.h"
 
 namespace zvec::sqlengine {

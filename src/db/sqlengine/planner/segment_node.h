@@ -21,8 +21,8 @@
 #include <arrow/acero/api.h>
 #include <arrow/api.h>
 #include <arrow/util/async_generator.h>
-#include "db/common/status.h"
 #include "db/sqlengine/planner/plan_info.h"
+#include "zvec/db/status.h"
 
 namespace zvec::sqlengine {
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "string_helper.h"
+#include "zvec/ailego/utility/string_helper.h"
 #include <utility>
 
 namespace zvec {
