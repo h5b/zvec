@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "zvec/ailego/utility/string_helper.h"
+#include <algorithm>
 #include <utility>
 
 namespace zvec {

@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <vector>
 #include <ailego/io/file.h>
 #include "zvec/ailego/pattern/singleton.h"
 
