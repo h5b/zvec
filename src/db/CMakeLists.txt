@@ -11,6 +11,8 @@ cc_directory(common)
 cc_directory(index)
 cc_directory(sqlengine)
 
+message(STATUS "proto include ${zvec_proto_SRCS} ${zvec_proto_HDR_DIR} ${CMAKE_CURRENT_BINARY_DIR}")
+
 cc_library(
   NAME zvec_db STATIC STRICT
   SRCS 
@@ -35,18 +37,21 @@ cc_library(
     sqlengine/planner/*.cc
     sqlengine/planner/ops/*.cc
     sqlengine/planner/physical_rules/*.cc
-  INCS .
+    # proto
+    ${CMAKE_CURRENT_BINARY_DIR}/proto/*.cc
+  INCS . ${CMAKE_CURRENT_BINARY_DIR}
   LIBS 
     zvec_ailego
-    zvec_proto
-    core_interface
+    zvec_core
     glog
     roaring
     rocksdb
     antlr4
+    libprotobuf
     Arrow::arrow_static
     Arrow::arrow_compute
     Arrow::arrow_dataset
     Arrow::arrow_acero
+  DEPS zvec_proto
   VERSION "${PROXIMA_ZVEC_VERSION}"
 )

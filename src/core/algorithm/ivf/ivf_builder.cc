@@ -14,7 +14,7 @@
 #include "ivf_builder.h"
 #include <ailego/pattern/defer.h>
 #include <zvec/ailego/utility/string_helper.h>
-#include "cluster/cluster_params.h"
+#include "algorithm/cluster/cluster_params.h"
 #include "ivf_dumper.h"
 
 namespace zvec {
