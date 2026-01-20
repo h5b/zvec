@@ -11,34 +11,11 @@ cc_directory(common)
 cc_directory(index)
 cc_directory(sqlengine)
 
-message(STATUS "proto include ${zvec_proto_SRCS} ${zvec_proto_HDR_DIR} ${CMAKE_CURRENT_BINARY_DIR}")
+file(GLOB_RECURSE ALL_DB_SRCS *.cc *.c *.h)
 
 cc_library(
-  NAME zvec_db STATIC STRICT
-  SRCS 
-    # collection.cc
-    *.cc 
-    # common
-    common/*.cc
-    # index
-    index/*.cc 
-    index/segment/*.cc 
-    index/column/vector_column/*.cc 
-    index/column/inverted_column/*.cc 
-    index/storage/*.cc 
-    index/storage/wal/*.cc 
-    index/common/*.cc
-    # sqlengine
-    sqlengine/*.cc
-    sqlengine/common/*.cc
-    sqlengine/antlr/gen/*.cc
-    sqlengine/parser/*.cc
-    sqlengine/analyzer/*.cc
-    sqlengine/planner/*.cc
-    sqlengine/planner/ops/*.cc
-    sqlengine/planner/physical_rules/*.cc
-    # proto
-    ${CMAKE_CURRENT_BINARY_DIR}/proto/*.cc
+  NAME zvec_db STATIC STRICT SRCS_NO_GLOB
+  SRCS ${ALL_DB_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/proto/zvec.pb.cc
   INCS . ${CMAKE_CURRENT_BINARY_DIR}
   LIBS 
     zvec_ailego
