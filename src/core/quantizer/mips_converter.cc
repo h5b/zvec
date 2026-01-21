@@ -15,7 +15,7 @@
 #include <zvec/ailego/utility/time_helper.h>
 #include <zvec/ailego/utility/type_helper.h>
 #include <zvec/core/framework/index_factory.h>
-#include <zvec/core/quantizer/quantizer_params.h>
+#include <core/quantizer/quantizer_params.h>
 
 namespace zvec {
 namespace core {

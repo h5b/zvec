@@ -14,7 +14,7 @@
 #include "ivf_centroid_index.h"
 #include <zvec/core/framework/index_framework.h>
 #include "metric/metric_params.h"
-#include <zvec/core/quantizer/quantizer_params.h>
+#include <core/quantizer/quantizer_params.h>
 
 namespace zvec {
 namespace core {

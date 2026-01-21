@@ -15,7 +15,7 @@
 
 #include <zvec/core/framework/index_framework.h>
 #include "metric/metric_params.h"
-#include <zvec/core/quantizer/quantizer_params.h>
+#include <core/quantizer/quantizer_params.h>
 #include "ivf_distance_calculator.h"
 #include "ivf_index_format.h"
 #include "ivf_params.h"

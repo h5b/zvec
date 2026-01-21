@@ -22,7 +22,7 @@
 #include <zvec/core/framework/index_flow.h>
 #include <gtest/gtest.h>
 #include <zvec/ailego/utility/float_helper.h>
-#include "zvec/core/quantizer/quantizer_params.h"
+#include "core/quantizer/quantizer_params.h"
 #include "zvec/core/framework/index_factory.h"
 
 
