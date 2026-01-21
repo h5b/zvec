@@ -294,8 +294,8 @@ struct IVFIndexParam : public BaseIndexParam {
 
 struct HNSWIndexParam : public BaseIndexParam {
   using Pointer = std::shared_ptr<HNSWIndexParam>;
-  int m = kDefaultHnswNeighborCnt;  // 图中每个点的邻居数
-  int ef_construction = kDefaultHnswEfConstruction;  // 构建时的邻居候选大小
+  int m = kDefaultHnswNeighborCnt;
+  int ef_construction = kDefaultHnswEfConstruction;
 
   // Constructors with delegation
   HNSWIndexParam() : BaseIndexParam(IndexType::kHNSW) {}

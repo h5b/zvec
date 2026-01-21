@@ -15,7 +15,7 @@
 #include <ailego/algorithm/binary_quantizer.h>
 #include <ailego/pattern/defer.h>
 #include <zvec/core/framework/index_factory.h>
-#include <zvec/core/quantizer/quantizer_params.h>
+#include <core/quantizer/quantizer_params.h>
 
 namespace zvec {
 namespace core {

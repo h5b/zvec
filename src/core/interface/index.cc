@@ -16,6 +16,7 @@
 #include <zvec/core/framework/index_error.h>
 #include <zvec/core/framework/index_storage.h>
 #include <zvec/core/interface/index.h>
+#include "mixed_reducer/mixed_reducer_params.h"
 
 namespace zvec::core_interface {
 

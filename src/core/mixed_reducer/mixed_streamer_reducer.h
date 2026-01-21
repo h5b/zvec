@@ -17,12 +17,11 @@
 #include <ailego/parallel/lock.h>
 #include <ailego/parallel/multi_thread_list.h>
 #include <utility/sparse_utility.h>
+#include <zvec/core/framework/index_error.h>
 #include <zvec/core/framework/index_reducer.h>
 #include <zvec/core/framework/index_reformer.h>
 #include <zvec/core/framework/index_searcher.h>
 #include <zvec/core/framework/index_streamer.h>
-#include <zvec/core/framework/index_error.h>
-#include <zvec/core/mixed_reducer/mixed_reducer_params.h>
 
 namespace zvec {
 namespace core {
