@@ -1,7 +1,7 @@
 name: Profiling / Investigation
-about: Profile performance, compatibility, or behavior in a specific scenario
-title: "[Profile] Short description of the scenario"
-labels: ["profiling", "investigation"]
+description: Profile performance, compatibility, or behavior in a specific scenario
+title: "[Profile]: "
+labels: ["profile"]
 body:
   - type: markdown
     attributes:

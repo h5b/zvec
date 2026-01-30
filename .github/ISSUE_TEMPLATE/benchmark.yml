@@ -1,7 +1,7 @@
 name: Benchmarking
-about: Add, update, or fix benchmark cases for zvec
-title: "[Benchmark] Short description of the benchmark scope"
-labels: ["benchmark", "performance"]
+description: Add, update, or fix benchmark cases for zvec
+title: "[Benchmark]: "
+labels: ["benchmark"]
 body:
   - type: markdown
     attributes:

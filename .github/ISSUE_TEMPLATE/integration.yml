@@ -1,7 +1,7 @@
 name: Ecosystem Integration
-about: Integrate zvec with external frameworks (e.g., LangChain, LlamaIndex)
-title: "[Integration] Integrate with <Framework Name>"
-labels: ["integration", "ecosystem"]
+description: Integrate zvec with external frameworks (e.g., LangChain, LlamaIndex)
+title: "[Integration]: "
+labels: ["integration"]
 body:
   - type: input
     id: framework

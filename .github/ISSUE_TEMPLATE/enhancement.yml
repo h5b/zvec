@@ -1,6 +1,6 @@
 name: Enhancement
-about: Improve an existing feature or component
-title: "[Enhance] Short description of the improvement"
+description: Improve an existing feature or component
+title: "[Enhance]: "
 labels: ["enhancement"]
 body:
   - type: markdown
