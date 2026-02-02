@@ -1,0 +1,21 @@
+SearcherCommon:
+    SearcherClass: HnswSearcher
+    IndexPath: /usr/local/src/yinzefeng.yzf/zvec/cohere.bf.index.1-test
+    TopK: 1,10,50,100 #指定返回topk，recall时多topk用逗号隔开，bench时会使用最大值
+    QueryFile: /usr/local/src/yinzefeng.yzf/test_luofeng/cohere/cohere_test_vector_1000.new.txt
+    QueryType: float #指定query向量类型，需要与索引类型一致
+    QueryFirstSep: ";" #指定query第一分隔符，用于分割key和特征
+    QuerySecondSep: " " #指定query第二分隔符，用于分割特征各维度
+    RecallLogDir: output #指定recall详情数据数据路径，不指定时默认不保存recall详情数据
+    RecallThreadCount: 32
+    #BenchThreadCount: 4  #指定bench并发数（召回并发直接使用cpu核数）
+    BenchThreadCount: 1  #指定bench并发数（召回并发直接使用cpu核数）
+    #BenchThreadCount: 8  #指定bench并发数（召回并发直接使用cpu核数）
+    #BenchThreadCount: 16  #指定bench并发数（召回并发直接使用cpu核数）
+    BenchIterCount: 1000000000 #指定bench执行条目数，当query量较少时会对query重复使用
+
+SearcherParams: #各Searcher方法的params参数，类型同上
+    #proxima.hnsw.searcher.neighbors_in_memory_enable: true
+    proxima.hnsw.searcher.ef : !!int 500
+    #proxima.hnsw.searcher.ef : !!int 300
+    #proxima.hnsw.searcher.ef : !!int 100

@@ -1,0 +1,27 @@
+IndexCommon:
+  IndexConfig: '{"is_huge_page":false,"use_id_map":false,"data_type":"DT_FP32","dimension":768,"index_type":"kHNSW","metric_type":"kCosine","quantizer_param":{"type":"kInt8"}, "m":50}'
+  IndexPath: /usr/local/src/yinzefeng.yzf/zvec/cohere.bf.index.1-test
+  TopK: 1,10 #指定返回topk，recall时多topk用逗号隔开，bench时会使用最大值
+  QueryFile: /usr/local/src/yinzefeng.yzf/test_luofeng/cohere_10m/cohere_test_vector_1000.new.txt
+  QueryType: float #指定query向量类型，需要与索引类型一致
+  QueryFirstSep: ";" #指定query第一分隔符，用于分割key和特征
+  QuerySecondSep: " " #指定query第二分隔符，用于分割特征各维度
+
+  # RecallLogDir: output #指定recall详情数据数据路径，不指定时默认不保存recall详情数据
+  RecallThreadCount: 16
+  BenchThreadCount: 16  #指定bench并发数（召回并发直接使用cpu核数）
+  BenchIterCount: 100000 #指定bench执行条目数，当query量较少时会对query重复使用
+  # BenchIterCount: 1000000 #指定bench执行条目数，当query量较少时会对query重复使用 100w
+  CompareById: true
+  LogLevel: info
+
+QueryConfig:
+  QueryParam: '{"index_type":"kHNSW","ef_search":250}'
+  
+  # RefinerConfig:
+  #   ScaleFactor: !!float 1.35
+  #   ReferenceIndex:
+  #     Config:   '{"use_id_map":false,"data_type":"DT_FP32","dimension":768,"index_type":"kFlat","metric_type":"kCosine"}'
+  #     Path: /home/wangjianning.wjn/workspace/dashvector/centaurdb_github/_workspace/bench/cohere_1m/flat_cosine_fp32/cohere.index
+      # Config:   '{"use_id_map":false,"data_type":"DT_FP32","dimension":768,"index_type":"kFlat","metric_type":"kCosine","quantizer_param":{"type":"kFP16"}}'
+      # Path: /home/wangjianning.wjn/workspace/dashvector/centaurdb_github/_workspace/bench/cohere_1m/flat_cosine_fp16/cohere.index
