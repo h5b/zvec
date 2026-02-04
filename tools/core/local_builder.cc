@@ -157,9 +157,9 @@ static inline size_t AlignSize(size_t size) {
   return (size + 0x1F) & (~0x1F);
 }
 
-bool dump_meta_segment(const IndexDumper::Pointer &dumper,
-                       const std::string &segment_id, const void *data,
-                       size_t size, size_t &writes) {
+int64_t dump_meta_segment(const IndexDumper::Pointer &dumper,
+                          const std::string &segment_id, const void *data,
+                          size_t size, size_t &writes) {
   size_t len = dumper->write(data, size);
   if (len != size) {
     LOG_ERROR("Dump segment %s data failed, expect: %lu, actual: %lu",
@@ -373,17 +373,17 @@ int build_sparse_by_streamer(IndexStreamer::Pointer &streamer,
   ailego::Params params;
   int ret = storage->init(params);
   if (ret != 0) {
-    cerr << "Storage Failed init" << endl;
+    cerr << "Storage Failed init";
     return IndexError_Runtime;
   }
   ret = storage->open(path, true);
   if (ret != 0) {
-    cerr << "Storage Failed to open" << endl;
+    cerr << "Storage Failed to open";
     return IndexError_Runtime;
   }
   ret = streamer->open(storage);
   if (ret != 0) {
-    cerr << "Failed to open storage" << endl;
+    cerr << "Failed to open storage";
     return IndexError_Runtime;
   }
 
@@ -549,12 +549,12 @@ int build_by_streamer(IndexStreamer::Pointer &streamer,
   }
   ret = storage->open(path, true);
   if (ret != 0) {
-    cerr << "Storage Failed to open" << endl;
+    cerr << "Storage Failed to open";
     return IndexError_Runtime;
   }
   ret = streamer->open(storage);
   if (ret != 0) {
-    cerr << "Failed to open storage" << endl;
+    cerr << "Failed to open storage";
     return IndexError_Runtime;
   }
 

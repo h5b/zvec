@@ -72,7 +72,7 @@ int parse_and_load_index_param(
         index_config.as<string>());
     index = core_interface::IndexFactory::CreateAndInitIndex(*params);
     if (!index) {
-      LOG_ERROR("Failed to create index");
+      cerr << "Failed to create index" << endl;
       return -1;
     }
     core_interface::StorageOptions storage_options;
@@ -82,13 +82,13 @@ int parse_and_load_index_param(
 
     int ret = index->Open(index_dir, storage_options);
     if (0 != ret) {
-      LOG_ERROR("Index open failed with ret %d", ret);
-      return -1;
+      cerr << "Index open failed with ret " << ret << endl;
+      return false;
     }
 
     cout << "Load index done!" << endl;
   } else {
-    LOG_ERROR("IndexCommon.IndexConfig is required");
+    cerr << "IndexCommon.IndexConfig is required" << endl;
     return -1;
   }
 
@@ -114,7 +114,7 @@ int parse_and_load_index_param(
           core_interface::BaseIndexQueryParam>(
           query_param_config.as<std::string>());
       if (!query_param) {
-        LOG_ERROR("Failed to deserialize query params");
+        cerr << "Failed to deserialize query params" << endl;
         return -1;
       }
     }
@@ -130,7 +130,8 @@ int parse_and_load_index_param(
         auto scale_factor = scale_factor_config.as<float>();
         refiner_param->scale_factor_ = scale_factor;
       } else {
-        LOG_ERROR("QueryConfig.RefinerConfig.ScaleFactor config is required");
+        cerr << "QueryConfig.RefinerConfig.ScaleFactor config is required"
+             << endl;
         return -1;
       }
 
@@ -148,9 +149,9 @@ int parse_and_load_index_param(
           reference_index =
               core_interface::IndexFactory::CreateAndInitIndex(*params);
         } else {
-          LOG_ERROR(
-              "QueryConfig.RefinerConfig.ReferenceIndex.Config config is "
-              "required");
+          cerr << "QueryConfig.RefinerConfig.ReferenceIndex.Config config is "
+                  "required"
+               << endl;
           return -1;
         }
 
@@ -168,20 +169,20 @@ int parse_and_load_index_param(
           int ret =
               reference_index->Open(reference_index_path, storage_options);
           if (0 != ret) {
-            LOG_ERROR("Index open failed with ret %d", ret);
+            cerr << "Index open failed with ret " << ret << endl;
             return -1;
           }
 
           cout << "Load reference index done!" << endl;
         } else {
-          LOG_ERROR(
-              "QueryConfig.RefinerConfig.ReferenceIndex.Path is required");
+          cerr << "QueryConfig.RefinerConfig.ReferenceIndex.Path is required"
+               << endl;
           return -1;
         }
         refiner_param->reference_index = reference_index;
       } else {
-        LOG_ERROR(
-            "QueryConfig.RefinerConfig.ReferenceIndex section is required");
+        cerr << "QueryConfig.RefinerConfig.ReferenceIndex section is required"
+             << endl;
         return -1;
       }  // QueryConfig.RefinerConfig.ReferenceIndex
 

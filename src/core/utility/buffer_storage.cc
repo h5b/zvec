@@ -90,7 +90,8 @@ class BufferStorage : public IndexStorage {
         }
         len = meta->data_size - offset;
       }
-      size_t buffer_offset = segment_->meta()->data_absolute_offset + offset;
+      size_t buffer_offset =
+          segment_->meta()->data_index + owner_->get_context_offset() + offset;
       ailego::BufferHandle buffer_handle =
           owner_->get_buffer_handle(buffer_offset, len);
       *data = buffer_handle.pin_vector_data();
@@ -105,7 +106,8 @@ class BufferStorage : public IndexStorage {
         }
         len = meta->data_size - offset;
       }
-      size_t buffer_offset = segment_->meta()->data_absolute_offset + offset;
+      size_t buffer_offset =
+          segment_->meta()->data_index + owner_->get_context_offset() + offset;
       data.reset(owner_->get_buffer_handle_ptr(buffer_offset, len));
       if (data.data()) {
         return len;
@@ -233,35 +235,12 @@ class BufferStorage : public IndexStorage {
       if (iter->segment_id_offset > footer_.segments_meta_size) {
         return IndexError_InvalidValue;
       }
-
-      // TODO: this is a simplified format compatibility handling logic,
-      //  and in the future, it should become a independent function.
-      if (header_.version == IndexFormat::COMPATIBLE_FORMAT_VERSION_0X0002) {
-        // v2: data offset is relative to the content_offset.
-        if (iter->data_absolute_offset > footer_.content_size) {
-          return IndexError_InvalidValue;
-        }
-        if (iter->data_absolute_offset + iter->data_size >
-            footer_.content_size) {
-          return IndexError_InvalidLength;
-        }
-        iter->data_absolute_offset +=
-            header_.content_offset + current_header_start_offset_;
-        // v2 end
-      }
-
-      // v3: data offset is absolute offset in file.
-      if (iter->data_absolute_offset > footer_.content_size +
-                                           header_.content_offset +
-                                           current_header_start_offset_) {
+      if (iter->data_index > footer_.content_size) {
         return IndexError_InvalidValue;
       }
-      if (iter->data_absolute_offset + iter->data_size >
-          footer_.content_size + header_.content_offset +
-              current_header_start_offset_) {
+      if (iter->data_index + iter->data_size > footer_.content_size) {
         return IndexError_InvalidLength;
       }
-      // v3 end
 
       if (iter->segment_id_offset < segment_ids_offset) {
         segment_ids_offset = iter->segment_id_offset;
@@ -279,59 +258,25 @@ class BufferStorage : public IndexStorage {
   }
 
   int ParseToMapping() {
-    while (true) {
-      int ret;
-      ret = ParseHeader(current_header_start_offset_);
-      if (ret != 0) {
-        LOG_ERROR("Failed to parse header, errno %d, %s", ret,
-                  IndexError::What(ret));
-        return ret;
-      }
+    ParseHeader(0);
 
-      switch (header_.version) {
-        case IndexFormat::CURRENT_FORMAT_VERSION:
-        case IndexFormat::COMPATIBLE_FORMAT_VERSION_0X0002:
-          break;
-        default:
-          LOG_ERROR("Unsupported index version: %u", header_.version);
-          return IndexError_Unsupported;
-      }
-
-      // Unpack footer
-      if (header_.meta_footer_size != sizeof(IndexFormat::MetaFooter)) {
-        return IndexError_InvalidLength;
-      }
-      if ((int32_t)header_.meta_footer_offset < 0) {
-        return IndexError_Unsupported;
-      }
-      uint64_t footer_offset =
-          header_.meta_footer_offset + current_header_start_offset_;
-      ret = ParseFooter(footer_offset);
-      if (ret != 0) {
-        LOG_ERROR("Failed to parse footer, errno %d, %s", ret,
-                  IndexError::What(ret));
-        return ret;
-      }
-
-      // Unpack segment table
-      if (sizeof(IndexFormat::SegmentMeta) * footer_.segment_count >
-          footer_.segments_meta_size) {
-        return IndexError_InvalidLength;
-      }
-      const uint64_t segment_start_offset =
-          footer_offset - footer_.segments_meta_size;
-      ret = ParseSegment(segment_start_offset);
-      if (ret != 0) {
-        LOG_ERROR("Failed to parse segment, errno %d, %s", ret,
-                  IndexError::What(ret));
-        return ret;
-      }
-
-      if (footer_.next_meta_header_offset == 0) {
-        break;
-      }
-      current_header_start_offset_ = footer_.next_meta_header_offset;
+    // Unpack footer
+    if (header_.meta_footer_size != sizeof(IndexFormat::MetaFooter)) {
+      return IndexError_InvalidLength;
     }
+    if ((int32_t)header_.meta_footer_offset < 0) {
+      return IndexError_Unsupported;
+    }
+    size_t footer_offset = header_.meta_footer_offset;
+    ParseFooter(footer_offset);
+
+    // Unpack segment table
+    if (sizeof(IndexFormat::SegmentMeta) * footer_.segment_count >
+        footer_.segments_meta_size) {
+      return IndexError_InvalidLength;
+    }
+    const int segment_start_offset = footer_offset - footer_.segments_meta_size;
+    ParseSegment(segment_start_offset);
     return 0;
   }
 
@@ -489,7 +434,6 @@ class BufferStorage : public IndexStorage {
   IndexFormat::MetaHeader header_;
   IndexFormat::MetaFooter footer_;
   std::map<std::string, IndexMapping::Segment> segments_{};
-  uint64_t current_header_start_offset_{0u};
 };
 
 INDEX_FACTORY_REGISTER_STORAGE(BufferStorage);

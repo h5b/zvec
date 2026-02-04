@@ -82,7 +82,6 @@ static inline int UnpackMappingSize(ailego::File &file, size_t *len) {
 }
 
 int IndexMapping::open(const std::string &path, bool cow, bool full_mode) {
-  path_ = path;
   full_mode_ = full_mode;
   copy_on_write_ = cow;
   huge_page_ = Ishugetlbfs(path);
@@ -109,12 +108,7 @@ int IndexMapping::open(const std::string &path, bool cow, bool full_mode) {
   return this->init_index_mapping(mapping_size);
 }
 
-int IndexMapping::create(const std::string &path, size_t seg_meta_capacity) {
-  path_ = path;
-  seg_meta_capacity_ = seg_meta_capacity;
-  current_header_start_offset_ = 0;
-
-  // write() & copying to mmap() will auto extend the file size
+int IndexMapping::create(const std::string &path, size_t segs_size) {
   if (!file_.create(path.c_str(), 0)) {
     LOG_ERROR("Failed to create file %s, errno %d, %s", path.c_str(), errno,
               std::strerror(errno));
@@ -122,34 +116,17 @@ int IndexMapping::create(const std::string &path, size_t seg_meta_capacity) {
   }
   huge_page_ = Ishugetlbfs(path);
   if (huge_page_) {
-    return init_hugepage_meta_section();
+    return create_hugepage(segs_size);
   }
-  return init_meta_section();
-}
-
-int IndexMapping::init_meta_section() {
-  if (current_header_start_offset_ % ailego::MemoryHelper::PageSize() != 0) {
-    LOG_ERROR("File offset %zu is not a multiple of the page size: %zu",
-              current_header_start_offset_, ailego::MemoryHelper::PageSize());
-    return IndexError_InvalidValue;
-  }
-
-  auto &path = path_;
-  size_t len =
-      CalcPageAlignedSize(seg_meta_capacity_ + sizeof(IndexFormat::MetaHeader) +
-                              sizeof(IndexFormat::MetaFooter),
-                          false);
+  size_t len = CalcPageAlignedSize(segs_size + sizeof(IndexFormat::MetaHeader) +
+                                       sizeof(IndexFormat::MetaFooter),
+                                   false);
 
   IndexFormat::MetaHeader meta_header;
   IndexFormat::MetaFooter meta_footer;
 
   // Write index header
   IndexFormat::SetupMetaHeader(&meta_header, len - sizeof(meta_footer), len);
-  if (!file_.seek(current_header_start_offset_, ailego::File::Origin::Begin)) {
-    LOG_ERROR("Failed to seek file %s, errno %d, %s", path.c_str(), errno,
-              std::strerror(errno));
-    return IndexError_SeekFile;
-  }
   if (file_.write(&meta_header, sizeof(meta_header)) != sizeof(meta_header)) {
     LOG_ERROR("Failed to write file: %s, errno %d, %s", path.c_str(), errno,
               std::strerror(errno));
@@ -178,18 +155,11 @@ int IndexMapping::init_meta_section() {
   return this->init_index_mapping(len);
 }
 
-int IndexMapping::init_hugepage_meta_section() {
-  ssize_t file_offset = (ssize_t)current_header_start_offset_;
-  if (file_offset % ailego::MemoryHelper::HugePageSize() != 0) {
-    LOG_ERROR("File offset %zu is not a multiple of the page size: %zu",
-              file_offset, ailego::MemoryHelper::HugePageSize());
-    return IndexError_InvalidValue;
-  }
-
-  size_t len =
-      CalcPageAlignedSize(seg_meta_capacity_ + sizeof(IndexFormat::MetaHeader) +
-                              sizeof(IndexFormat::MetaFooter),
-                          true);
+int IndexMapping::create_hugepage(size_t segs_size) {
+  size_t len = CalcPageAlignedSize(segs_size + sizeof(IndexFormat::MetaHeader) +
+                                       sizeof(IndexFormat::MetaFooter),
+                                   true);
+  int file_offset = 0;
   int opts = ailego::File::MMAP_SHARED | ailego::File::MMAP_HUGE_PAGE;
   void *addr =
       ailego::File::MemoryMap(file_.native_handle(), file_offset, len, opts);
@@ -224,7 +194,6 @@ int IndexMapping::init_hugepage_meta_section() {
   IndexFormat::UpdateMetaFooter(&meta_footer, 0);
   memcpy((char *)addr + file_offset, &meta_footer, sizeof(meta_footer));
   file_offset += sizeof(meta_footer);
-
   return this->init_index_mapping(len);
 }
 
@@ -232,16 +201,12 @@ void IndexMapping::close(void) {
   // Unmap all memory
   this->unmap_all();
   if (header_) {
-    for (auto item : header_addr_map_) {
-      auto header = item.second;
-      ailego::File::MemoryUnmap(header, header->content_offset);
-    }
+    ailego::File::MemoryUnmap(header_, header_->content_offset);
   }
   // Reset members
   segment_ids_offset_ = 0;
   segment_start_ = nullptr;
   header_ = nullptr;
-  header_addr_map_.clear();
   footer_ = nullptr;
   index_size_ = 0u;
   segments_.clear();
@@ -253,19 +218,9 @@ void IndexMapping::close(void) {
 }
 
 void IndexMapping::refresh(uint64_t check_point) {
-  // support add_with_id
-  for (auto item : header_addr_map_) {
-    auto header_start_offset = item.first;
-    auto header = item.second;
-    auto footer = reinterpret_cast<IndexFormat::MetaFooter *>(
-        reinterpret_cast<uint8_t *>(header) + header->meta_footer_offset);
-    auto segment_start = reinterpret_cast<IndexFormat::SegmentMeta *>(
-        reinterpret_cast<uint8_t *>(header) +
-        (header->meta_footer_offset - footer->segments_meta_size));
-    footer->segments_meta_crc =
-        ailego::Crc32c::Hash(segment_start, footer->segments_meta_size, 0);
-    IndexFormat::UpdateMetaFooter(footer, check_point);
-  }
+  footer_->segments_meta_crc =
+      ailego::Crc32c::Hash(segment_start_, footer_->segments_meta_size, 0);
+  IndexFormat::UpdateMetaFooter(footer_, check_point);
   header_dirty_ = true;
 }
 
@@ -283,21 +238,7 @@ int IndexMapping::append(const std::string &id, size_t size) {
   size_t need_size = sizeof(IndexFormat::SegmentMeta) + id_size;
   if (sizeof(IndexFormat::SegmentMeta) * footer_->segment_count + need_size >
       segment_ids_offset_) {
-    LOG_DEBUG("segment meta section expanded: %s", path_.c_str());
-    footer_->next_meta_header_offset = index_size_;
-    refresh(0);
-    flush();
-    // mmap file storage write() will update segment's meta
-    // ailego::File::MemoryUnmap(header_, header_->content_offset);
-    header_ = nullptr;
-    footer_ = nullptr;
-
-    current_header_start_offset_ = index_size_;
-    const int ret =
-        huge_page_ ? init_hugepage_meta_section() : init_meta_section();
-    if (ret != 0) {
-      return ret;
-    }
+    return IndexError_NoBuffer;
   }
 
   if (!copy_on_write_ && !file_.truncate(index_size_ + size)) {
@@ -310,10 +251,7 @@ int IndexMapping::append(const std::string &id, size_t size) {
   segment_ids_offset_ -= static_cast<uint32_t>(id_size);
   IndexFormat::SegmentMeta *segment = segment_start_ + footer_->segment_count;
   segment->segment_id_offset = segment_ids_offset_;
-  // For compatibility, write offset relative to the content_offset,
-  // and then restore the absolute offset while loading, i.e.,
-  // init_index_mapping().
-  segment->data_absolute_offset = index_size_;
+  segment->data_index = index_size_ - header_->content_offset;
   segment->data_size = 0;
   segment->data_crc = 0;
   segment->padding_size = size;
@@ -342,7 +280,7 @@ IndexMapping::Segment *IndexMapping::map(const std::string &id, bool warmup,
   if (!item->data()) {
     auto meta = item->meta();
     size_t mapping_size = meta->data_size + meta->padding_size;
-    size_t offset = meta->data_absolute_offset;
+    size_t offset = meta->data_index + header_->content_offset;
 
     void *addr = nullptr;
     if (!copy_on_write_) {
@@ -425,7 +363,7 @@ int IndexMapping::flush(void) {
 
     size_t segment_size = item->meta()->data_size + item->meta()->padding_size;
     if (full_mode_ && copy_on_write_) {
-      size_t off = item->meta()->data_absolute_offset;
+      size_t off = header_->content_offset + item->meta()->data_index;
       if (file_.write(off, item->data(), segment_size) != segment_size) {
         LOG_ERROR("Failed to write segment, size %zu, errno %d, %s",
                   segment_size, errno, std::strerror(errno));
@@ -443,21 +381,14 @@ int IndexMapping::flush(void) {
 
   header_dirty_ = false;
   if (full_mode_ && copy_on_write_) {
-    for (auto item : header_addr_map_) {
-      auto header_start_offset = item.first;
-      auto header = item.second;
-      if (file_.write(header_start_offset, header, header->content_offset) !=
-          header->content_offset) {
-        LOG_ERROR("Failed to write segment, size %lu, errno %d, %s",
-                  header->content_offset, errno, std::strerror(errno));
-        return IndexError_WriteData;
-      }
+    if (file_.write(0, header_, header_->content_offset) !=
+        header_->content_offset) {
+      LOG_ERROR("Failed to write segment, size %u, errno %d, %s",
+                header_->content_offset, errno, std::strerror(errno));
+      return IndexError_WriteData;
     }
   } else {
-    for (auto item : header_addr_map_) {
-      auto header = item.second;
-      ailego::File::MemoryFlush(header, header->content_offset);
-    }
+    ailego::File::MemoryFlush(header_, header_->content_offset);
   }
   return 0;
 }
@@ -468,8 +399,8 @@ int IndexMapping::init_index_mapping(size_t len) {
   if (huge_page_) {
     opts |= ailego::File::MMAP_HUGE_PAGE;
   }
-  uint8_t *start = reinterpret_cast<uint8_t *>(ailego::File::MemoryMap(
-      file_.native_handle(), current_header_start_offset_, len, opts));
+  uint8_t *start = reinterpret_cast<uint8_t *>(
+      ailego::File::MemoryMap(file_.native_handle(), 0, len, opts));
   if (!start) {
     LOG_ERROR("Failed to map file, errno %d, %s", errno, std::strerror(errno));
     return IndexError_MMapFile;
@@ -477,22 +408,12 @@ int IndexMapping::init_index_mapping(size_t len) {
 
   // Unpack header
   header_ = reinterpret_cast<IndexFormat::MetaHeader *>(start);
-  header_addr_map_.insert({current_header_start_offset_, header_});
   if (header_->meta_header_size != sizeof(IndexFormat::MetaHeader)) {
     return IndexError_InvalidLength;
   }
   if (ailego::Crc32c::Hash(header_, sizeof(*header_), header_->header_crc) !=
       header_->header_crc) {
     return IndexError_InvalidChecksum;
-  }
-
-  switch (header_->version) {
-    case IndexFormat::CURRENT_FORMAT_VERSION:
-    case IndexFormat::COMPATIBLE_FORMAT_VERSION_0X0002:
-      break;
-    default:
-      LOG_ERROR("Unsupported index version: %u", header_->version);
-      return IndexError_Unsupported;
   }
 
   // Unpack footer
@@ -545,34 +466,12 @@ int IndexMapping::init_index_mapping(size_t len) {
     if (iter->segment_id_offset > footer_->segments_meta_size) {
       return IndexError_InvalidValue;
     }
-    // TODO: this is a simplified format compatibility handling logic,
-    //  and in the future, it should become a independent function.
-    if (header_->version == IndexFormat::COMPATIBLE_FORMAT_VERSION_0X0002) {
-      // v2: data offset is relative to the content_offset.
-      if (iter->data_absolute_offset > footer_->content_size) {
-        return IndexError_InvalidValue;
-      }
-      if (iter->data_absolute_offset + iter->data_size >
-          footer_->content_size) {
-        return IndexError_InvalidLength;
-      }
-      iter->data_absolute_offset +=
-          header_->content_offset + current_header_start_offset_;
-      // v2 end
-    }
-
-    // v3: data offset is absolute offset in file.
-    if (iter->data_absolute_offset > footer_->content_size +
-                                         header_->content_offset +
-                                         current_header_start_offset_) {
+    if (iter->data_index > footer_->content_size) {
       return IndexError_InvalidValue;
     }
-    if (iter->data_absolute_offset + iter->data_size >
-        footer_->content_size + header_->content_offset +
-            current_header_start_offset_) {
+    if (iter->data_index + iter->data_size > footer_->content_size) {
       return IndexError_InvalidLength;
     }
-    // v3 end
 
     if (iter->segment_id_offset < segment_ids_offset_) {
       segment_ids_offset_ = iter->segment_id_offset;
@@ -586,24 +485,6 @@ int IndexMapping::init_index_mapping(size_t len) {
       segment_ids_offset_) {
     return IndexError_InvalidLength;
   }
-
-  if (header_->version == IndexFormat::COMPATIBLE_FORMAT_VERSION_0X0002) {
-    header_->version = IndexFormat::CURRENT_FORMAT_VERSION;
-    LOG_INFO("Index file format upgraded");
-    IndexFormat::UpdateMetaHeader(header_);
-    footer_->segments_meta_crc =
-        ailego::Crc32c::Hash(segment_start_, footer_->segments_meta_size, 0);
-    IndexFormat::UpdateMetaFooter(footer_, 0);
-    header_dirty_ = true;
-  }
-
-  if (footer_->next_meta_header_offset > 0) {
-    current_header_start_offset_ = footer_->next_meta_header_offset;
-    // Meta sections have all the same size, so we can use the same size to map
-    // the next meta section
-    return this->init_index_mapping(len);
-  }
-
   return 0;
 }
 
