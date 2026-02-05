@@ -2,12 +2,13 @@ import pytest
 import logging
 
 from typing import Any, Generator
-
+from zvec.typing import DataType, StatusCode, MetricType, QuantizeType
 import zvec
 from zvec import (
     CollectionOption,
     InvertIndexParam,
     HnswIndexParam,
+    FlatIndexParam,
     IVFIndexParam,
     FieldSchema,
     VectorSchema,
@@ -113,15 +114,96 @@ def full_schema_new(request) -> CollectionSchema:
             )
         )
     vectors = []
-    for k, v in DEFAULT_VECTOR_FIELD_NAME.items():
-        vectors.append(
-            VectorSchema(
-                v,
-                k,
-                dimension=DEFAULT_VECTOR_DIMENSION,
-                index_param=vector_index_param,
+
+    if vector_index_param in [HnswIndexParam(),
+                              FlatIndexParam(),
+                              HnswIndexParam(metric_type=MetricType.IP, m=16, ef_construction=100, ),
+                              FlatIndexParam(metric_type=MetricType.IP, ),
+
+                              ]:
+        for k, v in DEFAULT_VECTOR_FIELD_NAME.items():
+            vectors.append(
+                VectorSchema(
+                    v,
+                    k,
+                    dimension=DEFAULT_VECTOR_DIMENSION,
+                    index_param=vector_index_param,
+                )
             )
-        )
+    elif vector_index_param in [
+                                   IVFIndexParam(),
+                                   IVFIndexParam(
+                                        metric_type=MetricType.IP,
+                                        n_list=100,
+                                        n_iters=10,
+                                        use_soar=False,
+                                    ),
+                                   IVFIndexParam(metric_type=MetricType.L2,
+                                                 n_list=200,
+                                                 n_iters=20,
+                                                 use_soar=True,),
+                                   IVFIndexParam(metric_type=MetricType.COSINE,
+                                                 n_list=150,
+                                                 n_iters=15,
+                                                 use_soar=False, )
+    ]:
+        for k, v in DEFAULT_VECTOR_FIELD_NAME.items():
+            if v in ["vector_fp16_field", "vector_fp32_field"]:
+                vectors.append(
+                    VectorSchema(
+                        v,
+                        k,
+                        dimension=DEFAULT_VECTOR_DIMENSION,
+                        index_param=vector_index_param,
+                    )
+                )
+            elif v in ["vector_int8_field"] and vector_index_param in [
+                                   IVFIndexParam(metric_type=MetricType.L2,
+                                                 n_list=200,
+                                                 n_iters=20,
+                                                 use_soar=True,),
+                                   IVFIndexParam(metric_type=MetricType.COSINE,
+                                                 n_list=150,
+                                                 n_iters=15,
+                                                 use_soar=False, )] :
+                    vectors.append(
+                        VectorSchema(
+                            v,
+                            k,
+                            dimension=DEFAULT_VECTOR_DIMENSION,
+                            index_param=vector_index_param,
+                        )
+                    )
+            else:
+                vectors.append(
+                    VectorSchema(
+                        v,
+                        k,
+                        dimension=DEFAULT_VECTOR_DIMENSION,
+                        index_param=HnswIndexParam(),
+                    )
+                )
+    else:
+        for k, v in DEFAULT_VECTOR_FIELD_NAME.items():
+            if v in ["vector_fp16_field", "vector_fp32_field","vector_int8_field"]:
+                vectors.append(
+                    VectorSchema(
+                        v,
+                        k,
+                        dimension=DEFAULT_VECTOR_DIMENSION,
+                        index_param=vector_index_param,
+                    )
+                )
+            else:
+               vectors.append(
+                   VectorSchema(
+                       v,
+                       k,
+                       dimension=DEFAULT_VECTOR_DIMENSION,
+                       index_param=HnswIndexParam(),
+                   )
+               )
+
 
     return CollectionSchema(
         name="full_collection_new",
