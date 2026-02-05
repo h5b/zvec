@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "rabitq_converter.h"
+#include <strings.h>
 #include <memory>
 #include <rabitqlib/utils/rotator.hpp>
 #include <zvec/ailego/container/params.h>
@@ -90,14 +91,28 @@ int RabitqConverter::init(const IndexMeta &meta, const ailego::Params &params) {
     return IndexError_Unsupported;
   }
 
+  std::string rotator_type_str;
+  params.get(PARAM_RABITQ_ROTATOR_TYPE, &rotator_type_str);
+  if (rotator_type_str.empty()) {
+    rotator_type_ = rabitqlib::RotatorType::FhtKacRotator;
+  } else if (strncasecmp(rotator_type_str.c_str(), "fht", 3) == 0) {
+    rotator_type_ = rabitqlib::RotatorType::FhtKacRotator;
+  } else if (strncasecmp(rotator_type_str.c_str(), "matrix", 6) == 0) {
+    rotator_type_ = rabitqlib::RotatorType::MatrixRotator;
+  } else {
+    LOG_ERROR("Invalid rotator_type: %s", rotator_type_str.c_str());
+    return IndexError_InvalidArgument;
+  }
+
   // Create rotator
-  rotator_.reset(rabitqlib::choose_rotator<float>(
-      dimension_, rabitqlib::RotatorType::FhtKacRotator, padded_dim_));
+  rotator_.reset(
+      rabitqlib::choose_rotator<float>(dimension_, rotator_type_, padded_dim_));
 
   LOG_INFO(
       "RabitqConverter initialized: dim=%zu, padded_dim=%zu, "
-      "num_clusters=%zu, ex_bits=%zu",
-      dimension_, padded_dim_, num_clusters_, ex_bits_);
+      "num_clusters=%zu, ex_bits=%zu, rotator_type=%d[%s]",
+      dimension_, padded_dim_, num_clusters_, ex_bits_, (int)rotator_type_,
+      rotator_type_str.c_str());
 
   return 0;
 }
@@ -236,9 +251,9 @@ int RabitqConverter::dump(const IndexDumper::Pointer &dumper) {
   ailego::ElapsedTime timer;
   size_t dumped_size = 0;
 
-  int ret = dump_rabitq_centroids(dumper, dimension_, padded_dim_, ex_bits_,
-                                  num_clusters_, rotated_centroids_, centroids_,
-                                  rotator_, &dumped_size);
+  int ret = dump_rabitq_centroids(
+      dumper, dimension_, padded_dim_, ex_bits_, num_clusters_, rotator_type_,
+      rotated_centroids_, centroids_, rotator_, &dumped_size);
   if (ret != 0) {
     return ret;
   }
@@ -255,14 +270,14 @@ int RabitqConverter::quantize_vector(const float *raw_vector, size_t cluster_id,
                                      std::string *quantized_data) {
   // const float *centroid = &rotated_centroids_[cluster_id * padded_dim_];
 
-  // rabitq::RabitqQuantizer quantizer(dimension_, ex_bits_, metric);
+  // rabitq::rabitqquantizer quantizer(dimension_, ex_bits_, metric);
 
-  // // Quantize
-  // rabitq::QuantizedVector qvec;
+  // // quantize
+  // rabitq::quantizedvector qvec;
   // qvec.cluster_id = static_cast<uint32_t>(cluster_id);
   // quantizer.quantize_vector(raw_vector, centroid, &qvec);
 
-  // // Serialize: cluster_id + bin_data + ex_data + factors
+  // // serialize: cluster_id + bin_data + ex_data + factors
   // quantized_data->clear();
   // quantized_data->reserve(qvec.total_bytes());
 

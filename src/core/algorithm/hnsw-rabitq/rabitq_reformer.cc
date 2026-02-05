@@ -96,6 +96,7 @@ int RabitqReformer::load(IndexStorage::Pointer storage) {
   padded_dim_ = header.padded_dim;
   ex_bits_ = header.ex_bits;
   num_clusters_ = header.num_clusters;
+  rotator_type_ = static_cast<rabitqlib::RotatorType>(header.rotator_type);
   offset += sizeof(header);
 
   // Read rotated centroids
@@ -129,8 +130,8 @@ int RabitqReformer::load(IndexStorage::Pointer storage) {
     return IndexError_InvalidFormat;
   }
   // Create rotator
-  rotator_.reset(rabitqlib::choose_rotator<float>(
-      dimension_, rabitqlib::RotatorType::FhtKacRotator, padded_dim_));
+  rotator_.reset(
+      rabitqlib::choose_rotator<float>(dimension_, rotator_type_, padded_dim_));
   rotator_->load(reinterpret_cast<const char *>(block.data()));
   offset += size;
 
@@ -166,9 +167,10 @@ int RabitqReformer::load(IndexStorage::Pointer storage) {
 
   LOG_INFO(
       "Rabitq reformer load done. dimension=%zu, padded_dim=%zu, "
-      "ex_bits=%zu, num_clusters=%zu, size_bin_data=%zu, size_ex_data=%zu",
+      "ex_bits=%zu, num_clusters=%zu, size_bin_data=%zu, size_ex_data=%zu "
+      "rotator_type=%d",
       dimension_, padded_dim_, ex_bits_, num_clusters_, size_bin_data_,
-      size_ex_data_);
+      size_ex_data_, (int)rotator_type_);
   loaded_ = true;
   return 0;
 }
@@ -329,9 +331,9 @@ int RabitqReformer::dump(const IndexDumper::Pointer &dumper) {
   }
 
   size_t dumped_size = 0;
-  int ret = dump_rabitq_centroids(dumper, dimension_, padded_dim_, ex_bits_,
-                                  num_clusters_, rotated_centroids_, centroids_,
-                                  rotator_, &dumped_size);
+  int ret = dump_rabitq_centroids(
+      dumper, dimension_, padded_dim_, ex_bits_, num_clusters_, rotator_type_,
+      rotated_centroids_, centroids_, rotator_, &dumped_size);
   if (ret != 0) {
     return ret;
   }
@@ -385,8 +387,9 @@ int RabitqReformer::dump(const IndexStorage::Pointer &storage) {
   RabitqConverterHeader header;
   header.dim = static_cast<uint32_t>(dimension_);
   header.padded_dim = static_cast<uint32_t>(padded_dim_);
-  header.ex_bits = static_cast<uint32_t>(ex_bits_);
   header.num_clusters = static_cast<uint32_t>(num_clusters_);
+  header.ex_bits = static_cast<uint8_t>(ex_bits_);
+  header.rotator_type = static_cast<uint8_t>(rotator_type_);
   header.rotator_size = static_cast<uint32_t>(rotator_size);
   size_t written = segment->write(offset, &header, header_size);
   if (written != header_size) {

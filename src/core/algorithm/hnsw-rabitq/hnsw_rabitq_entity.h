@@ -70,10 +70,12 @@ class DistCalculator;
 
 struct RabitqConverterHeader {
   uint32_t num_clusters;
-  uint32_t ex_bits;
   uint32_t dim;
   uint32_t padded_dim;
   uint32_t rotator_size;
+  uint8_t ex_bits;
+  uint8_t rotator_type;
+  uint8_t padding[2];
   uint32_t reserve[3];
 
   RabitqConverterHeader() {

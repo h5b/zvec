@@ -32,6 +32,8 @@ static const std::string PARAM_RABITQ_NUM_CLUSTERS(
 static const std::string PARAM_RABITQ_TOTAL_BITS("proxima.rabitq.total_bits");
 static const std::string PARAM_RABITQ_REFORMER_METRIC_NAME(
     "proxima.rabitq.reformer.metric_name");
+static const std::string PARAM_RABITQ_ROTATOR_TYPE(
+    "proxima.rabitq.rotator.type");
 
 // Default values
 static constexpr size_t kDefaultNumClusters = 16;
@@ -42,7 +44,7 @@ static constexpr size_t kDefaultRabitqTotalBits = 7;
 // Common dump implementation for RabitqConverter and RabitqReformer
 inline int dump_rabitq_centroids(
     const IndexDumper::Pointer &dumper, size_t dimension, size_t padded_dim,
-    size_t ex_bits, size_t num_clusters,
+    size_t ex_bits, size_t num_clusters, rabitqlib::RotatorType rotator_type,
     const std::vector<float> &rotated_centroids,
     const std::vector<float> &centroids,
     const std::unique_ptr<rabitqlib::Rotator<float>> &rotator,
@@ -58,8 +60,9 @@ inline int dump_rabitq_centroids(
   RabitqConverterHeader header;
   header.dim = static_cast<uint32_t>(dimension);
   header.padded_dim = static_cast<uint32_t>(padded_dim);
-  header.ex_bits = static_cast<uint32_t>(ex_bits);
   header.num_clusters = static_cast<uint32_t>(num_clusters);
+  header.ex_bits = static_cast<uint8_t>(ex_bits);
+  header.rotator_type = static_cast<uint8_t>(rotator_type);
   header.rotator_size = static_cast<uint32_t>(rotator->dump_bytes());
   size_t size = dumper->write(&header, sizeof(header));
   if (size != sizeof(header)) {

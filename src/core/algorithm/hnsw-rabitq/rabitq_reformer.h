@@ -99,6 +99,7 @@ class RabitqReformer : public IndexReformer {
   std::vector<float> rotated_centroids_;
 
   // Rotator for vector transformation
+  rabitqlib::RotatorType rotator_type_{rabitqlib::RotatorType::FhtKacRotator};
   std::unique_ptr<rabitqlib::Rotator<float>> rotator_;
   rabitqlib::quant::RabitqConfig query_config_;
   rabitqlib::quant::RabitqConfig config_;

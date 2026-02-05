@@ -98,6 +98,7 @@ class RabitqConverter : public IndexConverter {
   std::vector<float> rotated_centroids_;
 
   // Rotator for vector transformation
+  rabitqlib::RotatorType rotator_type_{rabitqlib::RotatorType::FhtKacRotator};
   std::unique_ptr<rabitqlib::Rotator<float>> rotator_;
 };
 
