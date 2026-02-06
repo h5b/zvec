@@ -408,49 +408,69 @@ Examples:
     {'metric_type': 'COSINE', 'm': 16, 'ef_construction': 200}
 )pbdoc");
   hnsw_rabitq_params
-      .def(py::init<MetricType, int, int>(),
+      .def(py::init<MetricType, int, int, int, int, int>(),
            py::arg("metric_type") = MetricType::IP,
+           py::arg("total_bits") = core_interface::kDefaultRabitqTotalBits,
+           py::arg("num_clusters") = core_interface::kDefaultRabitqNumClusters,
            py::arg("m") = core_interface::kDefaultHnswNeighborCnt,
            py::arg("ef_construction") =
-               core_interface::kDefaultHnswEfConstruction)
+               core_interface::kDefaultHnswEfConstruction,
+           py::arg("sample_count") = 0)
       .def_property_readonly("m", &HnswRabitqIndexParams::m,
                              "int: Maximum number of neighbors per node.")
       .def_property_readonly(
           "ef_construction", &HnswRabitqIndexParams::ef_construction,
           "int: Candidate list size during index construction.")
+      .def_property_readonly("total_bits", &HnswRabitqIndexParams::total_bits,
+                             "int: Total bits for RabitQ quantization.")
+      .def_property_readonly("num_clusters",
+                             &HnswRabitqIndexParams::num_clusters,
+                             "int: Number of clusters for RabitQ.")
+      .def_property_readonly("sample_count",
+                             &HnswRabitqIndexParams::sample_count,
+                             "int: Sample count for RabitQ training.")
       .def(
           "to_dict",
           [](const HnswRabitqIndexParams &self) -> py::dict {
             py::dict dict;
             dict["type"] = index_type_to_string(self.type());
             dict["metric_type"] = metric_type_to_string(self.metric_type());
+            dict["total_bits"] = self.total_bits();
+            dict["num_clusters"] = self.num_clusters();
+            dict["sample_count"] = self.sample_count();
             dict["m"] = self.m();
             dict["ef_construction"] = self.ef_construction();
             return dict;
           },
           "Convert to dictionary with all fields")
-      .def("__repr__",
-           [](const HnswRabitqIndexParams &self) -> std::string {
-             return "{"
-                    "\"type\":\"" +
-                    index_type_to_string(self.type()) +
-                    "\", \"metric_type\":\"" +
-                    metric_type_to_string(self.metric_type()) +
-                    "\", \"m\":" + std::to_string(self.m()) +
-                    ", \"ef_construction\":" +
-                    std::to_string(self.ef_construction()) + "}";
-           })
+      .def(
+          "__repr__",
+          [](const HnswRabitqIndexParams &self) -> std::string {
+            return "{"
+                   "\"type\":\"" +
+                   index_type_to_string(self.type()) +
+                   "\", \"metric_type\":\"" +
+                   metric_type_to_string(self.metric_type()) +
+                   "\", \"total_bits\":" + std::to_string(self.total_bits()) +
+                   ", \"num_clusters\":" + std::to_string(self.num_clusters()) +
+                   ", \"sample_count\":" + std::to_string(self.sample_count()) +
+                   ", \"m\":" + std::to_string(self.m()) +
+                   ", \"ef_construction\":" +
+                   std::to_string(self.ef_construction()) + "}";
+          })
       .def(py::pickle(
           [](const HnswRabitqIndexParams &self) {
-            return py::make_tuple(self.metric_type(), self.m(),
-                                  self.ef_construction());
+            return py::make_tuple(self.metric_type(), self.total_bits(),
+                                  self.num_clusters(), self.m(),
+                                  self.ef_construction(), self.sample_count());
           },
           [](py::tuple t) {
-            if (t.size() != 3)
+            if (t.size() != 6)
               throw std::runtime_error(
                   "Invalid state for HnswRabitqIndexParams");
             return std::make_shared<HnswRabitqIndexParams>(
-                t[0].cast<MetricType>(), t[1].cast<int>(), t[2].cast<int>());
+                t[0].cast<MetricType>(), t[1].cast<int>(), t[2].cast<int>(),
+                t[3].cast<int>(), t[4].cast<int>(), t[5].cast<int>());
           }));
 
   // FlatIndexParams

@@ -362,6 +362,9 @@ class ProximaEngineHelper {
         index_param_builder->WithM(db_index_params->m());
         index_param_builder->WithEFConstruction(
             db_index_params->ef_construction());
+        index_param_builder->WithTotalBits(db_index_params->total_bits());
+        index_param_builder->WithNumClusters(db_index_params->num_clusters());
+        index_param_builder->WithSampleCount(db_index_params->sample_count());
         index_param_builder->WithProvider(
             db_index_params->raw_vector_provider());
         index_param_builder->WithReformer(db_index_params->rabitq_reformer());

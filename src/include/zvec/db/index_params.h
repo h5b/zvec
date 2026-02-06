@@ -210,18 +210,26 @@ class HnswIndexParams : public VectorIndexParams {
 class HnswRabitqIndexParams : public VectorIndexParams {
  public:
   HnswRabitqIndexParams(
-      MetricType metric_type, int m = core_interface::kDefaultHnswNeighborCnt,
-      int ef_construction = core_interface::kDefaultHnswEfConstruction)
+      MetricType metric_type,
+      int total_bits = core_interface::kDefaultRabitqTotalBits,
+      int num_clusters = core_interface::kDefaultRabitqNumClusters,
+      int m = core_interface::kDefaultHnswNeighborCnt,
+      int ef_construction = core_interface::kDefaultHnswEfConstruction,
+      int sample_count = 0)
       : VectorIndexParams(IndexType::HNSW_RABITQ, metric_type,
                           QuantizeType::UNDEFINED),
+        total_bits_(total_bits),
+        num_clusters_(num_clusters),
+        sample_count_(sample_count),
         m_(m),
         ef_construction_(ef_construction) {}
 
   using OPtr = std::shared_ptr<HnswRabitqIndexParams>;
 
   Ptr clone() const override {
-    auto obj = std::make_shared<HnswRabitqIndexParams>(metric_type_, m_,
-                                                       ef_construction_);
+    auto obj = std::make_shared<HnswRabitqIndexParams>(
+        metric_type_, total_bits_, num_clusters_, m_, ef_construction_,
+        sample_count_);
     obj->set_rabitq_reformer(rabitq_reformer_);
     obj->set_raw_vector_provider(raw_vector_provider_);
     return obj;
@@ -231,8 +239,10 @@ class HnswRabitqIndexParams : public VectorIndexParams {
     auto base_str = vector_index_params_to_string(
         "HnswRabitqIndexParams", metric_type_, QuantizeType::UNDEFINED);
     std::ostringstream oss;
-    oss << base_str << ",m:" << m_ << ",ef_construction:" << ef_construction_
-        << "}";
+    oss << base_str << ",total_bits:" << total_bits_
+        << ",num_clusters:" << num_clusters_
+        << ",sample_count:" << sample_count_ << ",m:" << m_
+        << ",ef_construction:" << ef_construction_ << "}";
     return oss.str();
   }
 
@@ -242,6 +252,9 @@ class HnswRabitqIndexParams : public VectorIndexParams {
     }
     auto &other_rabitq = dynamic_cast<const HnswRabitqIndexParams &>(other);
     return metric_type() == other_rabitq.metric_type() &&
+           total_bits_ == other_rabitq.total_bits_ &&
+           num_clusters_ == other_rabitq.num_clusters_ &&
+           sample_count_ == other_rabitq.sample_count_ &&
            m_ == other_rabitq.m_ &&
            ef_construction_ == other_rabitq.ef_construction_;
   }
@@ -274,7 +287,31 @@ class HnswRabitqIndexParams : public VectorIndexParams {
     return raw_vector_provider_;
   }
 
+  void set_total_bits(int total_bits) {
+    total_bits_ = total_bits;
+  }
+  int total_bits() const {
+    return total_bits_;
+  }
+
+  void set_num_clusters(int num_clusters) {
+    num_clusters_ = num_clusters;
+  }
+  int num_clusters() const {
+    return num_clusters_;
+  }
+
+  void set_sample_count(int sample_count) {
+    sample_count_ = sample_count;
+  }
+  int sample_count() const {
+    return sample_count_;
+  }
+
  private:
+  int total_bits_;
+  int num_clusters_;
+  int sample_count_;
   int m_;
   int ef_construction_;
   core::IndexProvider::Pointer raw_vector_provider_;

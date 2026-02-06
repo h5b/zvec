@@ -164,6 +164,18 @@ class HNSWRabitqIndexParamBuilder
     param->ef_construction = ef_construction;
     return *this;
   }
+  HNSWRabitqIndexParamBuilder &WithTotalBits(int total_bits) {
+    param->total_bits = total_bits;
+    return *this;
+  }
+  HNSWRabitqIndexParamBuilder &WithNumClusters(int num_clusters) {
+    param->num_clusters = num_clusters;
+    return *this;
+  }
+  HNSWRabitqIndexParamBuilder &WithSampleCount(int sample_count) {
+    param->sample_count = sample_count;
+    return *this;
+  }
   HNSWRabitqIndexParamBuilder &WithReformer(
       core::IndexReformer::Pointer reformer) {
     param->reformer = std::move(reformer);
