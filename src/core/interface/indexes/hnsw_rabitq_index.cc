@@ -43,11 +43,12 @@ int HNSWRabitqIndex::CreateAndInitStreamer(const BaseIndexParam &param) {
                             kDefaultHnswEfSearch);
   proxima_index_params_.set(core::PARAM_HNSW_RABITQ_STREAMER_USE_ID_MAP,
                             param_.use_id_map);
-  proxima_index_params_.set(core::PARAM_RABITQ_TOTAL_BITS, param_.total_bits);
-  proxima_index_params_.set(core::PARAM_RABITQ_NUM_CLUSTERS,
-                            param_.num_clusters);
   proxima_index_params_.set(core::PARAM_HNSW_RABITQ_GENERAL_DIMENSION,
                             input_vector_meta_.dimension());
+  proxima_index_params_.set(core::PARAM_RABITQ_TOTAL_BITS, param_.total_bits);
+  // num_clusters, sample_count are parameters for rabitq converter
+  // proxima_index_params_.set(core::PARAM_RABITQ_NUM_CLUSTERS,
+  //                           param_.num_clusters);
 
   auto streamer = std::make_shared<core::HnswRabitqStreamer>();
   streamer->set_provider(param_.provider);

@@ -61,6 +61,8 @@ static std::string quantize_type_to_string(const QuantizeType type) {
       return "INT4";
     case QuantizeType::FP16:
       return "FP16";
+    case QuantizeType::RABITQ:
+      return "RABITQ";
     default:
       return "UNDEFINED";
   }
@@ -435,6 +437,8 @@ Examples:
             py::dict dict;
             dict["type"] = index_type_to_string(self.type());
             dict["metric_type"] = metric_type_to_string(self.metric_type());
+            dict["quantize_type"] =
+                quantize_type_to_string(self.quantize_type());
             dict["total_bits"] = self.total_bits();
             dict["num_clusters"] = self.num_clusters();
             dict["sample_count"] = self.sample_count();
@@ -456,7 +460,9 @@ Examples:
                    ", \"sample_count\":" + std::to_string(self.sample_count()) +
                    ", \"m\":" + std::to_string(self.m()) +
                    ", \"ef_construction\":" +
-                   std::to_string(self.ef_construction()) + "}";
+                   std::to_string(self.ef_construction()) +
+                   "\", \"quantize_type\":\"" +
+                   quantize_type_to_string(self.quantize_type()) + "\"}";
           })
       .def(py::pickle(
           [](const HnswRabitqIndexParams &self) {

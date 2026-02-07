@@ -37,6 +37,7 @@
 #include <zvec/db/schema.h>
 #include <zvec/db/status.h>
 #include <zvec/db/type.h>
+#include "core/algorithm/hnsw-rabitq/rabitq_params.h"
 #include "db/common/constants.h"
 #include "db/common/file_helper.h"
 #include "db/common/global_resource.h"
@@ -1687,7 +1688,7 @@ Status SegmentImpl::create_vector_index(
       block.set_max_doc_id(meta()->max_doc_id());
       block.set_doc_count(meta()->doc_count());
       new_segment_meta->add_persisted_block(block);
-      if (vector_index_params->type() == IndexType::HNSW_RABITQ) {
+      if (vector_index_params->quantize_type() == QuantizeType::RABITQ) {
         raw_vector_provider = vector_indexer.value()->create_index_provider();
       }
     } else {
@@ -1695,7 +1696,7 @@ Status SegmentImpl::create_vector_index(
           vector_indexers_[column][0]->create_index_provider();
     }
 
-    if (vector_index_params->type() != IndexType::HNSW_RABITQ) {
+    if (vector_index_params->quantize_type() != QuantizeType::RABITQ) {
       auto quant_block_id = allocate_block_id();
       auto field_with_new_index_params = std::make_shared<FieldSchema>(*field);
       field_with_new_index_params->set_index_params(index_params);
@@ -1721,6 +1722,11 @@ Status SegmentImpl::create_vector_index(
       new_segment_meta->add_persisted_block(block);
     } else {
       // rabitq
+      auto rabitq_params = std::dynamic_pointer_cast<HnswRabitqIndexParams>(
+          vector_index_params->clone());
+      if (!rabitq_params) {
+        return Status::InternalError("Expect HnswRabitqIndexParams");
+      }
       // train rabitq converter
       auto converter = core::IndexFactory::CreateConverter("RabitqConverter");
       if (!converter) {
@@ -1739,7 +1745,16 @@ Status SegmentImpl::create_vector_index(
                   .value(),
               false),
           0, ailego::Params{});
-      converter->init(index_meta, ailego::Params());
+      ailego::Params converter_params;
+      converter_params.set(core::PARAM_RABITQ_TOTAL_BITS,
+                           rabitq_params->total_bits());
+      converter_params.set(core::PARAM_RABITQ_NUM_CLUSTERS,
+                           rabitq_params->num_clusters());
+      converter_params.set(core::PARAM_RABITQ_CONVERTER_SAMPLE_COUNT,
+                           rabitq_params->sample_count());
+      if (int ret = converter->init(index_meta, converter_params); ret != 0) {
+        return Status::InternalError("Failed to init rabitq converter:", ret);
+      }
       if (int ret = converter->train(raw_vector_provider); ret != 0) {
         return Status::InternalError("Failed to train rabitq converter:", ret);
       }
@@ -1747,17 +1762,11 @@ Status SegmentImpl::create_vector_index(
       if (int ret = converter->to_reformer(&reformer); ret != 0) {
         return Status::InternalError("Failed to to get rabitq reformer:", ret);
       }
-      const auto &hnsw_params =
-          std::dynamic_pointer_cast<HnswIndexParams>(vector_index_params);
-      auto rabitq_params = std::make_shared<HnswRabitqIndexParams>(
-          hnsw_params->metric_type(), hnsw_params->m(),
-          hnsw_params->ef_construction());
       rabitq_params->set_rabitq_reformer(reformer);
       rabitq_params->set_raw_vector_provider(raw_vector_provider);
 
       auto quant_block_id = allocate_block_id();
       auto field_with_new_index_params = std::make_shared<FieldSchema>(*field);
-      // field_with_new_index_params->set_index_params(index_params);
       field_with_new_index_params->set_index_params(rabitq_params);
 
       std::string index_file_path = FileHelper::MakeQuantizeVectorIndexPath(

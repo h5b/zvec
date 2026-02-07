@@ -29,7 +29,8 @@ namespace zvec {
 
 std::unordered_map<DataType, std::set<QuantizeType>> quantize_type_map = {
     {DataType::VECTOR_FP32,
-     {QuantizeType::FP16, QuantizeType::INT4, QuantizeType::INT8}},
+     {QuantizeType::FP16, QuantizeType::INT4, QuantizeType::INT8,
+      QuantizeType::RABITQ}},
     // {DataType::VECTOR_FP64, {QuantizeType::FP16}},
     {DataType::SPARSE_VECTOR_FP32, {QuantizeType::FP16}},
 };

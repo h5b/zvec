@@ -217,7 +217,7 @@ class HnswRabitqIndexParams : public VectorIndexParams {
       int ef_construction = core_interface::kDefaultHnswEfConstruction,
       int sample_count = 0)
       : VectorIndexParams(IndexType::HNSW_RABITQ, metric_type,
-                          QuantizeType::UNDEFINED),
+                          QuantizeType::RABITQ),
         total_bits_(total_bits),
         num_clusters_(num_clusters),
         sample_count_(sample_count),
@@ -236,8 +236,8 @@ class HnswRabitqIndexParams : public VectorIndexParams {
   }
 
   std::string to_string() const override {
-    auto base_str = vector_index_params_to_string(
-        "HnswRabitqIndexParams", metric_type_, QuantizeType::UNDEFINED);
+    auto base_str = vector_index_params_to_string("HnswRabitqIndexParams",
+                                                  metric_type_, quantize_type_);
     std::ostringstream oss;
     oss << base_str << ",total_bits:" << total_bits_
         << ",num_clusters:" << num_clusters_
@@ -252,6 +252,7 @@ class HnswRabitqIndexParams : public VectorIndexParams {
     }
     auto &other_rabitq = dynamic_cast<const HnswRabitqIndexParams &>(other);
     return metric_type() == other_rabitq.metric_type() &&
+           quantize_type_ == other_rabitq.quantize_type_ &&
            total_bits_ == other_rabitq.total_bits_ &&
            num_clusters_ == other_rabitq.num_clusters_ &&
            sample_count_ == other_rabitq.sample_count_ &&

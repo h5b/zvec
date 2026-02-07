@@ -67,6 +67,7 @@ enum QuantizeType {
   QT_FP16 = 1;
   QT_INT8 = 2;
   QT_INT4 = 3;
+  QT_RABITQ = 4;
 };
 
 enum MetricType {

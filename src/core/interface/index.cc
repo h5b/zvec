@@ -124,12 +124,18 @@ int Index::CreateAndInitConverterReformer(const QuantizerParam &param,
   } else {
     if (index_param.metric_type == MetricType::kCosine) {
       switch (param.type) {
-        // fall through
         case QuantizerType::kNone:
-        case QuantizerType::kRabitq:
           if (index_param.data_type == DataType::DT_FP16) {
             converter_name = "CosineHalfFloatConverter";
           } else if (index_param.data_type == DataType::DT_FP32) {
+            converter_name = "CosineNormalizeConverter";
+          } else {
+            LOG_ERROR("Unsupported data type: ");
+            return core::IndexError_Unsupported;
+          }
+          break;
+        case QuantizerType::kRabitq:
+          if (index_param.data_type == DataType::DT_FP32) {
             converter_name = "CosineNormalizeConverter";
           } else {
             LOG_ERROR("Unsupported data type: ");
