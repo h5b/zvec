@@ -336,11 +336,6 @@ int HnswRabitqSearcher::search_bf_impl(const void *query,
         if (!ctx->filter().is_valid() || !ctx->filter()(entity_.get_key(id))) {
           EstimateRecord dist;
           alg_->get_full_est(id, dist, entity);
-          if (dist.est_dist < 0) {
-            LOG_ERROR("Invalid dist. dist.id=%zu dist.dist=%f",
-                      static_cast<size_t>(id), dist.est_dist);
-            continue;
-          }
           ctx->topk_heap().emplace(id, dist);
         }
       }
