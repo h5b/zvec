@@ -203,5 +203,17 @@ static const std::string STRATIFIED_TRAINER_AUTOAUNE =
 static const std::string STRATIFIED_TRAINER_PARAMS_IN_LEVEL_PREFIX =
     "proxima.stratified.trainer.cluster_params_in_level_";
 
+static const std::string MULTI_CHUNK_CLUSTER_COUNT =
+    "proxima.cluster.multi_chunk_cluster.count";
+static const std::string MULTI_CHUNK_CLUSTER_CHUNK_COUNT =
+    "proxima.cluster.multi_chunk_cluster.chunk_count";
+static const std::string MULTI_CHUNK_CLUSTER_THREAD_COUNT =
+    "proxima.cluster.multi_chunk_cluster.thread_count";
+static const std::string MULTI_CHUNK_CLUSTER_EPSILON =
+    "proxima.cluster.multi_chunk_cluster.epsilon";
+static const std::string MULTI_CHUNK_CLUSTER_MAX_ITERATIONS =
+    "proxima.cluster.multi_chunk_cluster.max_iterations";
+static const std::string MULTI_CHUNK_CLUSTER_MARKOV_CHAIN_LENGTH =
+    "proxima.cluster.multi_chunk_cluster.markov_chain_length";
 }  // namespace core
 }  // namespace zvec

@@ -82,6 +82,11 @@ class FileReadStorage : public IndexStorage {
       return region_size_;
     }
 
+    //! Retrieve offset of data
+    size_t data_offset(void) const override {
+      return data_offset_;
+    }
+    
     //! Fetch data from segment (with own buffer)
     size_t fetch(size_t offset, void *buf, size_t len) const override {
       if (ailego_unlikely(offset + len > region_size_)) {
@@ -385,6 +390,15 @@ class FileReadStorage : public IndexStorage {
     return magic_;
   }
 
+  //! Retrieve file ptr if has
+  std::shared_ptr<ailego::File> file(void) const {
+    return file_ptr_;
+  }
+
+  std::string file_path(void) const {
+    return file_path_;
+  }
+  
  protected:
   //! Open a index file
   static inline std::shared_ptr<ailego::File> OpenFile(const std::string &path,
