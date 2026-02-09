@@ -127,6 +127,21 @@ Status FieldSchema::validate() const {
         }
       }
 
+      if (index_params_->type() == IndexType::HNSW_RABITQ) {
+        if (data_type_ != DataType::VECTOR_FP32) {
+          return Status::InvalidArgument(
+              "schema validate failed: HNSW_RABITQ index only support FP32 "
+              "data types");
+        }
+        auto metric_type = vector_index_params->metric_type();
+        if (metric_type != MetricType::L2 && metric_type != MetricType::IP &&
+            metric_type != MetricType::COSINE) {
+          return Status::InvalidArgument(
+              "schema validate failed: HNSW_RABITQ index only support "
+              "L2/IP/COSINE metric");
+        }
+      }
+
       if (vector_index_params->quantize_type() != QuantizeType::UNDEFINED) {
         auto iter = quantize_type_map.find(data_type_);
         if (iter == quantize_type_map.end()) {
