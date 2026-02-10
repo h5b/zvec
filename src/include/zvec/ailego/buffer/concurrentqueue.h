@@ -111,8 +111,8 @@ static inline thread_id_t thread_id() {
 #elif defined(_WIN32) || defined(__WINDOWS__) || defined(__WIN32__)
 // No sense pulling in windows.h in a header, we'll manually declare the
 // function we use and rely on backwards-compatibility for this not to break
-extern "C" __declspec(dllimport) unsigned long __stdcall GetCurrentThreadId(
-    void);
+extern "C"
+    __declspec(dllimport) unsigned long __stdcall GetCurrentThreadId(void);
 namespace moodycamel {
 namespace details {
 static_assert(sizeof(unsigned long) == sizeof(std::uint32_t),
@@ -709,7 +709,7 @@ struct nomove_if<false> {
 };
 
 template <typename It>
-static inline auto deref_noexcept(It &it) MOODYCAMEL_NOEXCEPT->decltype(*it) {
+static inline auto deref_noexcept(It &it) MOODYCAMEL_NOEXCEPT -> decltype(*it) {
   return *it;
 }
 
