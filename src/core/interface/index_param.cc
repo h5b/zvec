@@ -130,8 +130,8 @@ bool HNSWIndexParam::DeserializeFromJsonObject(
     return false;
   }
 
-  if (index_type != IndexType::kHNSW && index_type != IndexType::kHNSQRabitq) {
-    LOG_ERROR("index_type is not kHNSW or kHNSQRabitq");
+  if (index_type != IndexType::kHNSW) {
+    LOG_ERROR("index_type is not kHNSW");
     return false;
   }
 
@@ -139,6 +139,39 @@ bool HNSWIndexParam::DeserializeFromJsonObject(
   DESERIALIZE_VALUE_FIELD(json_obj, ef_construction);
 
   return true;
+}
+
+bool HNSWRabitqIndexParam::DeserializeFromJsonObject(
+    const ailego::JsonObject &json_obj) {
+  if (!BaseIndexParam::DeserializeFromJsonObject(json_obj)) {
+    return false;
+  }
+
+  if (index_type != IndexType::kHNSWRabitq) {
+    LOG_ERROR("index_type is not kHNSWRabitq");
+    return false;
+  }
+
+  DESERIALIZE_VALUE_FIELD(json_obj, m);
+  DESERIALIZE_VALUE_FIELD(json_obj, ef_construction);
+  DESERIALIZE_VALUE_FIELD(json_obj, total_bits);
+  DESERIALIZE_VALUE_FIELD(json_obj, num_clusters);
+  DESERIALIZE_VALUE_FIELD(json_obj, sample_count);
+
+  return true;
+}
+
+ailego::JsonObject HNSWRabitqIndexParam::SerializeToJsonObject(
+    bool omit_empty_value) const {
+  auto json_obj = BaseIndexParam::SerializeToJsonObject(omit_empty_value);
+  json_obj.set("m", ailego::JsonValue(m));
+  json_obj.set("ef_construction", ailego::JsonValue(ef_construction));
+  json_obj.set("total_bits", ailego::JsonValue(total_bits));
+  json_obj.set("num_clusters", ailego::JsonValue(num_clusters));
+  if (!omit_empty_value || sample_count != 0) {
+    json_obj.set("sample_count", ailego::JsonValue(sample_count));
+  }
+  return json_obj;
 }
 
 ailego::JsonObject QuantizerParam::SerializeToJsonObject(

@@ -62,7 +62,7 @@ enum class IndexType {
   kFlat,
   kIVF,  // it's actual a two-layer index
   kHNSW,
-  kHNSQRabitq,
+  kHNSWRabitq,
 };
 
 enum class IVFSearchMethod { kBF, kHNSW };
@@ -344,23 +344,22 @@ struct HNSWRabitqIndexParam : public BaseIndexParam {
   core::IndexReformer::Pointer reformer = nullptr;
 
   // Constructors with delegation
-  HNSWRabitqIndexParam() : BaseIndexParam(IndexType::kHNSQRabitq) {}
+  HNSWRabitqIndexParam() : BaseIndexParam(IndexType::kHNSWRabitq) {}
 
   HNSWRabitqIndexParam(int m, int ef_construction)
-      : BaseIndexParam(IndexType::kHNSQRabitq),
+      : BaseIndexParam(IndexType::kHNSWRabitq),
         m(m),
         ef_construction(ef_construction) {}
 
   HNSWRabitqIndexParam(MetricType metric, int dim, int m, int ef_construction)
-      : BaseIndexParam(IndexType::kHNSQRabitq, metric, dim),
+      : BaseIndexParam(IndexType::kHNSWRabitq, metric, dim),
         m(m),
         ef_construction(ef_construction) {}
 
  protected:
-  // TODO: implement deserialize
-  // bool DeserializeFromJsonObject(const ailego::JsonObject &json_obj)
-  // override; ailego::JsonObject SerializeToJsonObject(
-  //     bool omit_empty_value = false) const override;
+  bool DeserializeFromJsonObject(const ailego::JsonObject &json_obj) override;
+  ailego::JsonObject SerializeToJsonObject(
+      bool omit_empty_value = false) const override;
 };
 
 }  // namespace zvec::core_interface

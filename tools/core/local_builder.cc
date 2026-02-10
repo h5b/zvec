@@ -514,7 +514,8 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
       uint64_t key = holder->get_key(id);
       if (retrieval_mode == RM_DENSE) {
         if (reformer) {
-          ret = reformer->convert(holder->get_vector(id), qmeta, &ovec, &ometa);
+          ret = reformer->convert(holder->get_vector_by_index(id), qmeta, &ovec,
+                                  &ometa);
           if (ret != 0) {
             LOG_ERROR("Failed to convert vector for %s", IndexError::What(ret));
             errcode = ret;
@@ -522,7 +523,8 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
           }
           ret = add_to_streamer(key, ovec.data(), ometa, ctx);
         } else {
-          ret = add_to_streamer(key, holder->get_vector(id), qmeta, ctx);
+          ret =
+              add_to_streamer(key, holder->get_vector_by_index(id), qmeta, ctx);
         }
       } else {
         cerr << "Retrieval mode not supported";
@@ -925,6 +927,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     build_holder->set_metric(metric_name, metric_params);
     meta.set_metric(metric_name, 0, metric_params);
   }
+  IndexMeta input_meta = meta;
   string converter_name;
   ailego::Params converter_params;
   if (config_common["ConverterName"] &&
@@ -1138,8 +1141,8 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   }
 
   if (builder_class == "HnswRabitqStreamer") {
-    if (setup_hnsw_rabitq_streamer(streamer, meta, config_root, converter_name,
-                                   &cv_build_holder) != 0) {
+    if (setup_hnsw_rabitq_streamer(streamer, input_meta, config_root,
+                                   converter_name, &cv_build_holder) != 0) {
       return -1;
     }
   } else if (builder_class == "HnswRabitqBuilder" && !converter_name.empty()) {

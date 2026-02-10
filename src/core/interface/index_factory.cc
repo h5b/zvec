@@ -45,7 +45,7 @@ Index::Pointer IndexFactory::CreateAndInitIndex(const BaseIndexParam &param) {
     ptr = std::make_shared<HNSWIndex>();
   } else if (param.index_type == IndexType::kIVF) {
     ptr = std::make_shared<IVFIndex>();
-  } else if (param.index_type == IndexType::kHNSQRabitq) {
+  } else if (param.index_type == IndexType::kHNSWRabitq) {
     ptr = std::make_shared<HNSWRabitqIndex>();
   } else {
     LOG_ERROR("Unsupported index type: ");
@@ -106,7 +106,7 @@ BaseIndexParam::Pointer IndexFactory::DeserializeIndexParamFromJson(
       }
       return param;
     }
-    case IndexType::kHNSQRabitq: {
+    case IndexType::kHNSWRabitq: {
       HNSWRabitqIndexParam::Pointer param =
           std::make_shared<HNSWRabitqIndexParam>();
       if (!param->DeserializeFromJson(json_str)) {
@@ -166,7 +166,7 @@ std::string IndexFactory::QueryParamSerializeToJson(const QueryParamType &param,
     if (!omit_empty_value || param.ef_search != 0) {
       json_obj.set("ef_search", ailego::JsonValue(param.ef_search));
     }
-    index_type = IndexType::kHNSQRabitq;
+    index_type = IndexType::kHNSWRabitq;
   }
 
   json_obj.set("index_type",
@@ -261,6 +261,17 @@ typename QueryParamType::Pointer IndexFactory::QueryParamDeserializeFromJson(
         return nullptr;
       }
       return param;
+    } else if (index_type == IndexType::kHNSWRabitq) {
+      auto param = std::make_shared<HNSWRabitqQueryParam>();
+      if (!parse_common_fields(param)) {
+        return nullptr;
+      }
+      if (!extract_value_from_json(json_obj, "ef_search", param->ef_search,
+                                   tmp_json_value)) {
+        LOG_ERROR("Failed to deserialize ef_search");
+        return nullptr;
+      }
+      return param;
     } else {
       LOG_ERROR("Unsupported index type: %s",
                 magic_enum::enum_name(index_type).data());
@@ -282,6 +293,12 @@ typename QueryParamType::Pointer IndexFactory::QueryParamDeserializeFromJson(
       if (!extract_value_from_json(json_obj, "nprobe", param->nprobe,
                                    tmp_json_value)) {
         LOG_ERROR("Failed to deserialize nprobe");
+        return nullptr;
+      }
+    } else if constexpr (std::is_same_v<QueryParamType, HNSWRabitqQueryParam>) {
+      if (!extract_value_from_json(json_obj, "ef_search", param->ef_search,
+                                   tmp_json_value)) {
+        LOG_ERROR("Failed to deserialize ef_search");
         return nullptr;
       }
     } else {
