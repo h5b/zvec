@@ -97,11 +97,12 @@ class VecBufferPool {
  public:
   typedef std::shared_ptr<VecBufferPool> Pointer;
 
-  VecBufferPool(const std::string &filename, size_t pool_capacity,
-                size_t block_size);
+  VecBufferPool(const std::string &filename);
   ~VecBufferPool() {
     close(fd_);
   }
+
+  int init(size_t pool_capacity, size_t block_size);
 
   VecBufferPoolHandle get_handle();
 

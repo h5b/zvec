@@ -131,7 +131,7 @@ class IndexStorage : public IndexModule {
     void reset(ailego::VecBufferPoolHandle *buffer_pool_handle, int block_id,
                void *data) {
       if (type_ == MemoryBlockType::MBT_BUFFERPOOL) {
-        buffer_pool_handle->release_one(buffer_block_id_);
+        buffer_pool_handle_->release_one(buffer_block_id_);
       }
       type_ = MemoryBlockType::MBT_BUFFERPOOL;
       buffer_pool_handle_ = buffer_pool_handle;

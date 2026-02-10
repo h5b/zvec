@@ -98,7 +98,7 @@ class BufferStorage : public IndexStorage {
       }
       size_t buffer_offset = segment_header_start_offset_ +
                              segment_header_->content_offset +
-                             segment_->meta()->data_index + offset;
+                             segment_->meta()->data_index;
       *data =
           owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset;
       return len;
@@ -114,7 +114,7 @@ class BufferStorage : public IndexStorage {
       }
       size_t buffer_offset = segment_header_start_offset_ +
                              segment_header_->content_offset +
-                             segment_->meta()->data_index + offset;
+                             segment_->meta()->data_index;
       data.reset(
           owner_->buffer_pool_handle_.get(), segment_id_,
           owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset);
@@ -177,21 +177,15 @@ class BufferStorage : public IndexStorage {
 
   //! Open storage
   int open(const std::string &path, bool /*create*/) override {
-    LOG_INFO("open buffer storage 1");
     file_name_ = path;
-    buffer_pool_ = std::make_shared<ailego::VecBufferPool>(
-        path, 20lu * 1024 * 1024 * 1024, 2490368 * 2);
+    buffer_pool_ = std::make_shared<ailego::VecBufferPool>(path);
     buffer_pool_handle_ = std::make_shared<ailego::VecBufferPoolHandle>(
         buffer_pool_->get_handle());
     int ret = ParseToMapping();
-    LOG_ERROR("segment count: %lu, max_segment_size: %lu", segments_.size(),
-              max_segment_size_);
-    for (auto iter = segments_.begin(); iter != segments_.end(); iter++) {
-      auto seg = this->get(iter->first, 0);
-      MemoryBlock block;
-      int len = seg->read(0, block, 1);
-      LOG_ERROR("segment %s: %d", iter->first.c_str(), len);
+    if (ret != 0) {
+      return ret;
     }
+    ret = buffer_pool_->init(20lu * 1024 * 1024 * 1024, max_segment_size_);
     if (ret != 0) {
       return ret;
     }

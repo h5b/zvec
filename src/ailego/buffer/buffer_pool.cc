@@ -66,7 +66,7 @@ void LPMap::init(size_t entry_num) {
     entries_[i].load_count.store(0);
     entries_[i].buffer = nullptr;
   }
-  cache_.init(entry_num);
+  cache_.init(entry_num * 4);
 }
 
 char *LPMap::acquire_block(block_id_t block_id) {
@@ -136,9 +136,7 @@ void LPMap::recycle(moodycamel::ConcurrentQueue<char *> &free_buffers) {
   }
 }
 
-VecBufferPool::VecBufferPool(const std::string &filename, size_t pool_capacity,
-                             size_t block_size)
-    : pool_capacity_(pool_capacity) {
+VecBufferPool::VecBufferPool(const std::string &filename) {
   fd_ = open(filename.c_str(), O_RDONLY);
   if (fd_ < 0) {
     throw std::runtime_error("Failed to open file: " + filename);
@@ -148,9 +146,12 @@ VecBufferPool::VecBufferPool(const std::string &filename, size_t pool_capacity,
     throw std::runtime_error("Failed to stat file: " + filename);
   }
   file_size_ = st.st_size;
+}
 
-  size_t buffer_num = pool_capacity_ / block_size;
-  size_t block_num = file_size_ / block_size + 500;
+int VecBufferPool::init(size_t pool_capacity, size_t block_size) {
+  pool_capacity_ = pool_capacity;
+  size_t buffer_num = pool_capacity_ / block_size + 10;
+  size_t block_num = file_size_ / block_size + 10;
   lp_map_.init(block_num);
   for (size_t i = 0; i < buffer_num; i++) {
     char *buffer = (char *)aligned_alloc(64, block_size);
@@ -160,6 +161,7 @@ VecBufferPool::VecBufferPool(const std::string &filename, size_t pool_capacity,
   }
   LOG_DEBUG("Buffer pool num: %zu, entry num: %zu", buffer_num,
             lp_map_.entry_num());
+  return 0;
 }
 
 VecBufferPoolHandle VecBufferPool::get_handle() {
@@ -209,7 +211,6 @@ char *VecBufferPool::acquire_buffer(block_id_t block_id, size_t offset,
 int VecBufferPool::get_meta(size_t offset, size_t length, char *buffer) {
   ssize_t read_bytes = pread(fd_, buffer, length, offset);
   if (read_bytes != static_cast<ssize_t>(length)) {
-    LOG_ERROR("Buffer pool failed to read file at offset: %zu", offset);
     LOG_ERROR("Buffer pool failed to read file at offset: %zu", offset);
     return -1;
   }
