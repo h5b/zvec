@@ -35,11 +35,6 @@ class HnswRabitqContext : public IndexContext {
     kStreamerContext = 3
   };
 
-  enum Mode {
-    kAdd = 0,
-    kQuery = 1,
-  };
-
   //! Construct
   HnswRabitqContext(size_t dimension, const IndexMetric::Pointer &metric,
                     const HnswRabitqEntity::Pointer &entity);
@@ -412,7 +407,6 @@ class HnswRabitqContext : public IndexContext {
 
   inline void clear() {
     add_dc_.clear();
-    query_dc_.clear();
     if (ailego_unlikely(this->debugging())) {
       stats_get_neighbors_cnt_ = 0u;
       stats_get_vector_cnt_ = 0u;
@@ -478,11 +472,6 @@ class HnswRabitqContext : public IndexContext {
     group_topk_heaps_.clear();
   }
 
-  //! Set mode, only streamer need to call
-  void set_mode(Mode mode) {
-    mode_ = mode;
-  }
-
   void set_provider(IndexProvider::Pointer provider) {
     add_dc_.set_provider(std::move(provider));
   }
@@ -494,16 +483,10 @@ class HnswRabitqContext : public IndexContext {
  private:
   inline HnswRabitqAddDistCalculator &dc() {
     return add_dc_;
-    if (mode_ == kAdd) {
-      return add_dc_;
-    }
-    LOG_ERROR("Not support query mode");
-    throw std::runtime_error("Not support query mode");
   }
 
-  inline const HnswRabitqDistCalculator &dc() const {
+  inline const HnswRabitqAddDistCalculator &dc() const {
     return add_dc_;
-    return mode_ == kAdd ? add_dc_ : query_dc_;
   }
 
  private:
@@ -518,7 +501,6 @@ class HnswRabitqContext : public IndexContext {
  private:
   HnswRabitqEntity::Pointer entity_;
   HnswRabitqAddDistCalculator add_dc_;
-  HnswRabitqDistCalculator query_dc_;
   IndexMetric::Pointer metric_;
 
   bool debug_mode_{false};
@@ -553,7 +535,6 @@ class HnswRabitqContext : public IndexContext {
   uint32_t stats_get_vector_cnt_{0u};
   uint32_t stats_visit_dup_cnt_{0u};
   std::string preprocess_buffer_;
-  Mode mode_{kAdd};
   const void *query_{nullptr};
 };
 

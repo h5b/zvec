@@ -96,13 +96,13 @@ class HnswRabitqAlgorithm {
                         HnswRabitqContext *ctx) const;
 
   //! Update the node's neighbors
-  void update_neighbors(HnswRabitqDistCalculator &dc, node_id_t id,
+  void update_neighbors(HnswRabitqAddDistCalculator &dc, node_id_t id,
                         level_t level, TopkHeap &topk_heap);
 
   //! Checking linkId could be id's new neighbor, and add as neighbor if true
   //! @dc         distance calculator
   //! @updateHeap temporary heap in updating neighbors
-  void reverse_update_neighbors(HnswRabitqDistCalculator &dc, node_id_t id,
+  void reverse_update_neighbors(HnswRabitqAddDistCalculator &dc, node_id_t id,
                                 level_t level, node_id_t link_id,
                                 ResultRecord dist, TopkHeap &update_heap);
 

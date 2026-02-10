@@ -23,15 +23,11 @@ HnswRabitqContext::HnswRabitqContext(size_t dimension,
                                      const HnswRabitqEntity::Pointer &entity)
     : IndexContext(metric),
       entity_(entity),
-      add_dc_(entity_.get(), metric, dimension),
-      query_dc_(entity_.get(), metric, dimension) {}
+      add_dc_(entity_.get(), metric, dimension) {}
 
 HnswRabitqContext::HnswRabitqContext(const IndexMetric::Pointer &metric,
                                      const HnswRabitqEntity::Pointer &entity)
-    : IndexContext(metric),
-      entity_(entity),
-      add_dc_(entity_.get(), metric),
-      query_dc_(entity_.get(), metric) {}
+    : IndexContext(metric), entity_(entity), add_dc_(entity_.get(), metric) {}
 
 HnswRabitqContext::~HnswRabitqContext() {
   visit_filter_.destroy();
@@ -45,7 +41,6 @@ int HnswRabitqContext::init(ContextType type) {
 
   switch (type) {
     case kBuilderContext:
-      mode_ = kAdd;
       ret = visit_filter_.init(VisitFilter::ByteMap, entity_->doc_cnt(),
                                max_scan_num_, negative_probability_);
       if (ret != 0) {
@@ -57,7 +52,6 @@ int HnswRabitqContext::init(ContextType type) {
       break;
 
     case kSearcherContext:
-      mode_ = kQuery;
       ret = visit_filter_.init(filter_mode_, entity_->doc_cnt(), max_scan_num_,
                                negative_probability_);
       if (ret != 0) {
@@ -68,8 +62,6 @@ int HnswRabitqContext::init(ContextType type) {
       break;
 
     case kStreamerContext:
-      // may be add or query
-      mode_ = kAdd;
       // maxScanNum is unknown if inited from streamer, so the docCnt may
       // change. we need to compute maxScanNum by scan ratio, and preserve
       // max_doc_cnt space from visit filter

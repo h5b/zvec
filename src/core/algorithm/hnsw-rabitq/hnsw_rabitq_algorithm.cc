@@ -169,7 +169,7 @@ void HnswRabitqAlgorithm::add_neighbors(node_id_t id, level_t level,
     return;
   }
 
-  HnswRabitqDistCalculator &dc = ctx->dist_calculator();
+  HnswRabitqAddDistCalculator &dc = ctx->dist_calculator();
 
   update_neighbors(dc, id, level, topk_heap);
 
@@ -313,7 +313,7 @@ void HnswRabitqAlgorithm::expand_neighbors_by_group(
   // if (group_topk_heaps.size() < ctx->group_num()) {
   //   VisitFilter &visit = ctx->visit_filter();
   //   CandidateHeap &candidates = ctx->candidates();
-  //   HnswRabitqDistCalculator &dc = ctx->dist_calculator();
+  //   HnswRabitqAddDistCalculator &dc = ctx->dist_calculator();
 
   //   std::function<bool(node_id_t)> filter = [](node_id_t) { return false; };
   //   if (ctx->filter().is_valid()) {
@@ -398,7 +398,7 @@ void HnswRabitqAlgorithm::expand_neighbors_by_group(
   // }      // end if
 }
 
-void HnswRabitqAlgorithm::update_neighbors(HnswRabitqDistCalculator &dc,
+void HnswRabitqAlgorithm::update_neighbors(HnswRabitqAddDistCalculator &dc,
                                            node_id_t id, level_t level,
                                            TopkHeap &topk_heap) {
   topk_heap.sort();
@@ -461,11 +461,9 @@ void HnswRabitqAlgorithm::update_neighbors(HnswRabitqDistCalculator &dc,
   return;
 }
 
-void HnswRabitqAlgorithm::reverse_update_neighbors(HnswRabitqDistCalculator &dc,
-                                                   node_id_t id, level_t level,
-                                                   node_id_t link_id,
-                                                   ResultRecord dist,
-                                                   TopkHeap &update_heap) {
+void HnswRabitqAlgorithm::reverse_update_neighbors(
+    HnswRabitqAddDistCalculator &dc, node_id_t id, level_t level,
+    node_id_t link_id, ResultRecord dist, TopkHeap &update_heap) {
   const size_t max_neighbor_cnt = entity_.neighbor_cnt(level);
 
   uint32_t lock_idx = id & kLockMask;

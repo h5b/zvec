@@ -21,9 +21,10 @@
 namespace zvec {
 namespace core {
 
-class HnswRabitqDistCalculator {
+//! HnswRabitqAddDistCalculator is only used for index construction
+class HnswRabitqAddDistCalculator {
  public:
-  typedef std::shared_ptr<HnswRabitqDistCalculator> Pointer;
+  typedef std::shared_ptr<HnswRabitqAddDistCalculator> Pointer;
 
  public:
   enum DistType {
@@ -35,8 +36,8 @@ class HnswRabitqDistCalculator {
 
  public:
   //! Constructor
-  HnswRabitqDistCalculator(const HnswRabitqEntity *entity,
-                           const IndexMetric::Pointer &metric, uint32_t dim)
+  HnswRabitqAddDistCalculator(const HnswRabitqEntity *entity,
+                              const IndexMetric::Pointer &metric, uint32_t dim)
       : entity_(entity),
         distance_(metric->distance()),
         batch_distance_(metric->batch_distance()),
@@ -45,9 +46,9 @@ class HnswRabitqDistCalculator {
         compare_cnt_(0) {}
 
   //! Constructor
-  HnswRabitqDistCalculator(const HnswRabitqEntity *entity,
-                           const IndexMetric::Pointer &metric, uint32_t dim,
-                           const void *query)
+  HnswRabitqAddDistCalculator(const HnswRabitqEntity *entity,
+                              const IndexMetric::Pointer &metric, uint32_t dim,
+                              const void *query)
       : entity_(entity),
         distance_(metric->distance()),
         batch_distance_(metric->batch_distance()),
@@ -56,8 +57,8 @@ class HnswRabitqDistCalculator {
         compare_cnt_(0) {}
 
   //! Constructor
-  HnswRabitqDistCalculator(const HnswRabitqEntity *entity,
-                           const IndexMetric::Pointer &metric)
+  HnswRabitqAddDistCalculator(const HnswRabitqEntity *entity,
+                              const IndexMetric::Pointer &metric)
       : entity_(entity),
         distance_(metric->distance()),
         batch_distance_(metric->batch_distance()),
@@ -199,21 +200,28 @@ class HnswRabitqDistCalculator {
     return dim_;
   }
 
- protected:
-  virtual const void *get_vector(node_id_t id) const {
-    fprintf(stderr, "dist_calculator get_vector called\n");
-    return entity_->get_vector(id);
+  void set_provider(IndexProvider::Pointer provider) {
+    provider_ = std::move(provider);
+  }
+
+  int get_vector(const node_id_t *ids, uint32_t count,
+                 std::vector<IndexStorage::MemoryBlock> &vec_blocks) const;
+
+  const void *get_vector(node_id_t id) const {
+    key_t key = entity_->get_key(id);
+    if (key == kInvalidKey) {
+      return nullptr;
+    }
+    return provider_->get_vector(key);
   }
 
  private:
-  HnswRabitqDistCalculator(const HnswRabitqDistCalculator &) = delete;
-  HnswRabitqDistCalculator &operator=(const HnswRabitqDistCalculator &) =
+  HnswRabitqAddDistCalculator(const HnswRabitqAddDistCalculator &) = delete;
+  HnswRabitqAddDistCalculator &operator=(const HnswRabitqAddDistCalculator &) =
       delete;
 
- protected:
-  const HnswRabitqEntity *entity_;
-
  private:
+  const HnswRabitqEntity *entity_;
   IndexMetric::MatrixDistance distance_;
   IndexMetric::MatrixBatchDistance batch_distance_;
 
@@ -223,30 +231,7 @@ class HnswRabitqDistCalculator {
   uint32_t compare_cnt_;        // record distance compute times
   uint32_t compare_cnt_batch_;  // record batch distance compute time
   bool error_{false};
-};
 
-class HnswRabitqAddDistCalculator : public HnswRabitqDistCalculator {
- public:
-  typedef std::shared_ptr<HnswRabitqAddDistCalculator> Pointer;
-  using HnswRabitqDistCalculator::HnswRabitqDistCalculator;
-
-  void set_provider(IndexProvider::Pointer provider) {
-    provider_ = std::move(provider);
-  }
-
-  int get_vector(const node_id_t *ids, uint32_t count,
-                 std::vector<IndexStorage::MemoryBlock> &vec_blocks) const;
-
-  const void *get_vector(node_id_t id) const override {
-    key_t key = entity_->get_key(id);
-    if (key == kInvalidKey) {
-      return nullptr;
-    }
-    // TODO: use MemoryBlock version?
-    return provider_->get_vector(key);
-  }
-
- private:
   // get raw vector
   IndexProvider::Pointer provider_;
 };
