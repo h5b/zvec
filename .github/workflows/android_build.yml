@@ -1,0 +1,72 @@
+name: android-cross-build
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+  merge_group:
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # abi: [arm64-v8a, armeabi-v7a, x86_64]
+        abi: [arm64-v8a]
+        api: [21]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build git ca-certificates python3 \
+            build-essential make
+
+      - name: Setup Android NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK (side by side)
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "ndk;26.1.10909125"
+
+      - name: Use host env to compile protoc
+        shell: bash
+        run: |
+          cmake -S . -B build-host -G Ninja
+          cmake --build build-host --target protoc --parallel
+
+      - name: Configure (CMake)
+        shell: bash
+        run: |
+          git submodule foreach --recursive 'git stash --include-untracked'
+
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/26.1.10909125"
+
+          cmake -S . -B build-android-${{ matrix.abi }} -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=${{ matrix.abi }} \
+            -DANDROID_PLATFORM=android-${{ matrix.api }} \
+            -DANDROID_STL=c++_shared \
+            -DBUILD_PYTHON_BINDINGS=OFF \
+            -DBUILD_TOOLS=OFF \
+            -DGLOBAL_CC_PROTOBUF_PROTOC=build-host/bin/protoc \
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build build-android-${{ matrix.abi }} --parallel
