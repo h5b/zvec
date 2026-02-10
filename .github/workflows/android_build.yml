@@ -45,7 +45,7 @@ jobs:
       - name: Install NDK (side by side)
         shell: bash
         run: |
-            yes | sdkmanager --licenses
+            # yes | sdkmanager --licenses
             sdkmanager "ndk;26.1.10909125"
 
       - name: Use host env to compile protoc
