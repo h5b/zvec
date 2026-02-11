@@ -179,13 +179,13 @@ jobs:
             adb shell 'ls -la /data/local/tmp/db-example'
             
             echo "Running ailego example:"
-            adb shell 'cd /data/local/tmp && chmod +x ailego-example && ./ailego-example'
+            adb shell 'cd /data/local/tmp && ./ailego-example'
             echo "Exit code: $?"
             
             echo "Running core example:"
-            adb shell 'cd /data/local/tmp && chmod +x core-example && ./core-example'
+            adb shell 'cd /data/local/tmp && ./core-example'
             echo "Exit code: $?"
             
             echo "Running db example:"
-            adb shell 'cd /data/local/tmp && chmod +x db-example && ./db-example'
+            adb shell 'cd /data/local/tmp && ./db-example'
             echo "Exit code: $?"
