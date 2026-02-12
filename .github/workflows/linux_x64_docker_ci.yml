@@ -128,7 +128,9 @@ jobs:
           cd "$CLEAN_WORKSPACE"
           CMAKE_GENERATOR="Unix Makefiles" \
           CMAKE_BUILD_PARALLEL_LEVEL="$NPROC" \
-          ${{ env.PYTHON_BIN }} -m pip install -v . --config-settings='cmake.define.BUILD_TOOLS="ON"'
+          ${{ env.PYTHON_BIN }} -m pip install -v . \
+            --no-build-isolation \
+            --config-settings='cmake.define.BUILD_TOOLS="ON"'
         shell: bash
 
       - name: Run Python Tests with Coverage
