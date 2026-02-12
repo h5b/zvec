@@ -154,7 +154,7 @@ jobs:
         with:
           api-level: ${{ matrix.api }}
           arch: ${{ matrix.abi }}
-          target: google_apis
+          # target: google_apis
           # emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           # disable-animations: true
           script: |
