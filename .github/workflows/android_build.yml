@@ -155,8 +155,8 @@ jobs:
           api-level: ${{ matrix.api }}
           arch: ${{ matrix.abi }}
           target: google_apis
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-          disable-animations: true
+          # emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          # disable-animations: true
           script: |
             # Wait for device to be ready
             adb wait-for-device
