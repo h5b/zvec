@@ -25,6 +25,10 @@
   <a href="https://x.com/zvec_ai">🐦 <strong>X (Twitter)</strong> </a>
 </p>
 
+<p align="center">
+  <a href="https://trendshift.io/repositories/20830" target="_blank"><img src="https://trendshift.io/api/badge/repositories/20830" alt="alibaba%2Fzvec | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</p>
+
 **Zvec** is an open-source, in-process vector database — lightweight, lightning-fast, and designed to embed directly into applications. Built on **Proxima** (Alibaba's battle-tested vector search engine), it delivers production-grade, low-latency, scalable similarity search with minimal setup.
 
 ## 💫 Features
